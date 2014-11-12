@@ -1,0 +1,12 @@
+/home/viki/ROSta-Bot/install/_setup_util.py
+/home/viki/ROSta-Bot/install/env.sh
+/home/viki/ROSta-Bot/install/setup.bash
+/home/viki/ROSta-Bot/install/setup.sh
+/home/viki/ROSta-Bot/install/setup.zsh
+/home/viki/ROSta-Bot/install/.rosinstall
+/home/viki/ROSta-Bot/install/etc/catkin/profile.d/05.catkin_make.bash
+/home/viki/ROSta-Bot/install/etc/catkin/profile.d/05.catkin_make_isolated.bash
+/home/viki/ROSta-Bot/install/lib/pkgconfig/marker_detection.pc
+/home/viki/ROSta-Bot/install/share/marker_detection/cmake/marker_detectionConfig.cmake
+/home/viki/ROSta-Bot/install/share/marker_detection/cmake/marker_detectionConfig-version.cmake
+/home/viki/ROSta-Bot/install/share/marker_detection/package.xml

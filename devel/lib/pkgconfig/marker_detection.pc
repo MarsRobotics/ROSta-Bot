@@ -1,0 +1,8 @@
+prefix=/home/viki/ROSta-Bot/devel
+
+Name: marker_detection
+Description: Description of marker_detection
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/viki/ROSta-Bot/devel/lib 
+Requires: 

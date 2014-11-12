@@ -1,0 +1,7 @@
+set(_CATKIN_CURRENT_PACKAGE "marker_detection")
+set(marker_detection_MAINTAINER "Taylor Nightingale <nighting15@up.edu>, Matt Holland <hollandm15@up.edu>, Matt Delaney <delaney15@up.edu>")
+set(marker_detection_DEPRECATED "")
+set(marker_detection_VERSION "0.0.0")
+set(marker_detection_BUILD_DEPENDS "cv_bridge" "image_transport" "roscpp" "sensor_msgs" "std_msgs")
+set(marker_detection_RUN_DEPENDS "cv_bridge" "image_transport" "roscpp" "sensor_msgs" "std_msgs")
+set(marker_detection_BUILDTOOL_DEPENDS "catkin" "aruco" "OpenCV")
