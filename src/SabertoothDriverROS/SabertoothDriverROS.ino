@@ -168,9 +168,11 @@ void setup(){
 // This program does whatever ROS directs it to do.
 // So far, it drives the robot forwards and backwards.
 void loop(){
+  sabertoothDriverNode.spinOnce();
   if (new_commands) {
      new_commands = 0;
      driveAllMotors(current_velocity, current_direction);
   }
+  delayMicroseconds(100000);
 
 }
