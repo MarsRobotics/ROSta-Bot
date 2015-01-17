@@ -5,3 +5,5 @@ msg_gen/
 install/
 devel/
 srb_gen/
+.idea
+.catkin_workspace
