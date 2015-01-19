@@ -1,6 +1,5 @@
 import rospy
 
-# Constants that match the Arduino constants for direction.
 
 #This class serves as the API for the sabertooth motor controllers and the drive motors they control.
 class TransportDriveMotorAPI:

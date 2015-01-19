@@ -1,9 +1,9 @@
 __author__ = 'Matt Holland'
-from transition import *
+from src.state_machine.src.transition import *
 
 
 #TODO: enforce state requirements (We won't go into transfer state when excavator is still on board the transport)
-class state:
+class State:
 
     nextStateId = 0
 
@@ -18,7 +18,7 @@ class state:
         self.transitions = []
         self.name = name
         self.onTick = onTick
-        self.id = ++state.nextStateId
+        self.id = ++State.nextStateId
         return
 
     ##
@@ -35,7 +35,7 @@ class state:
     #
     def addTransition(self, name, canTransition, nextState):
 
-        newTransition = transition(name, canTransition, nextState)
+        newTransition = Transition(name, canTransition, nextState)
 
         self.transitions.append(newTransition)
 

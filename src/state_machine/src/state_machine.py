@@ -1,13 +1,13 @@
 __author__ = 'Matt Holland'
 
-from state import *
+from src.state_machine.src.state import *
 
 
 def doNothing():
     return
 
 
-class stateMachine:
+class StateMachine:
 
     def __init__(self):
         self.states = []
@@ -28,7 +28,7 @@ class stateMachine:
     # Returns: The newly added state
     #
     def addState(self, name, onTick):
-        newState = state(name, onTick)
+        newState = State(name, onTick)
         self.states.append(newState)
 
         return newState

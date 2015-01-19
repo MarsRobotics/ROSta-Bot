@@ -1,7 +1,7 @@
 __author__ = 'Matt Holland'
 
 
-class transition:
+class Transition:
 
     nextTransitionId = 0
 
@@ -20,6 +20,6 @@ class transition:
         self.canTransition = canTransition
         self.nextState = nextState
         self.name = name
-        self.id = ++transition.nextTransitionId
+        self.id = ++Transition.nextTransitionId
 
         return

@@ -1,12 +1,12 @@
 __author__ = 'Matt Holland'
 
-from stateMachine import *
+from src.state_machine.src.state_machine import *
 
 
 def testFunction():
     return True
 
-m = stateMachine()
+m = StateMachine()
 s2 = m.addState("end", lambda: testFunction())
 #TODO: why does this lambda function stuff work^v
 m.startState.addTransition("toEnd", lambda: testFunction, s2)
