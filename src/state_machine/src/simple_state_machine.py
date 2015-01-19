@@ -47,7 +47,10 @@ start.addTransition("Vehicle too close to target", lambda: target_too_close, dri
 drivingForwards.addTransition("Stop moving towards the target", lambda: close_enough() or target_too_close(), start)
 drivingForwards.addTransition("Stop moving away from the target", lambda: close_enough() or target_too_close(), start)
 
-#TODO: define our units. For now, arbitrary margin of error.
-targetDistance = 500
-currentDistance = 500
-MARGIN_OF_ERROR = 50
+# All measurements are in Centimeters.
+# How far away from the target do we want to be? (cm)
+targetDistance = 200
+# How far away from the target are we, currently? (cm)
+currentDistance = 200
+# How far away from the target can we be and still be 'close enough'? (cm)
+MARGIN_OF_ERROR = 10
