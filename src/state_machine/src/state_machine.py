@@ -1,6 +1,8 @@
+#!/usr/bin/env python
+
 __author__ = 'Matt Holland'
 
-from src.state_machine.src.state import *
+from state import *
 
 
 def doNothing():

@@ -1,5 +1,11 @@
+#!/usr/bin/env python
+
 __author__ = 'Matt Holland'
-from src.state_machine.src.transition import *
+import sys
+sys.path.append("/home/viki/ROSta-Bot/src/transporter/src")
+sys.path.append("/home/viki/ROSta-Bot/src/State_machine/script")
+from transport_drive_motor_API import *
+from transition import *
 
 
 #TODO: enforce state requirements (We won't go into transfer state when excavator is still on board the transport)
