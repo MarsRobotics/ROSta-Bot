@@ -1,10 +1,13 @@
 /* 
  * rosserial IR Ranger Example  
  * 
+ * NOW DEPENDS ON the SharpIR library:
+ * http://playground.arduino.cc/Main/SharpIR 
  */
 
 #include <ros.h>
 #include <std_msgs/Int32.h>
+#include <SharpIR.h>
 
 ros::NodeHandle  nh;
 
@@ -15,6 +18,8 @@ ros::Publisher irSensor( "range_data", &irReading);
 
 int pin = 0;
 int val = 0;
+// pin, # of values to average, %change required for new value,
+SharpIR sharp(pin,5,95,20150);
 
 void setup()
 {
@@ -26,8 +31,7 @@ void setup()
 void loop()
 {
   // publish the range value 
-  val = analogRead(pin);
-  irReading.data = val;
+  irReading.data = sharp.distance();
   irSensor.publish(&irReading);
   //Serial.println(val);
   nh.spinOnce();
