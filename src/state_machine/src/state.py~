@@ -3,6 +3,7 @@
 __author__ = 'Matt Holland'
 import sys
 sys.path.append("/home/viki/ROSta-Bot/src/transporter/src")
+sys.path.append("/home/viki/ROSta-Bot/src/state_machine/src")
 from transport_drive_motor_API import *
 from transition import *
 

@@ -5,7 +5,6 @@ import sys
 import rospy
 from std_msgs.msg import Int64
 sys.path.append("/home/viki/ROSta-Bot/src/transporter/src")
-sys.path.append("/home/viki/ROSta-Bot/src/State_machine/script")
 from transport_drive_motor_API import *
 from state_machine import *
 
