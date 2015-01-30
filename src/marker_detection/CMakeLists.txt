@@ -112,6 +112,7 @@ include_directories(
 
 ## Declare a cpp executable
 add_executable(marker_detection_node src/marker_detection_node.cpp)
+add_executable(marker_distance_finding_node src/marker_distance_test.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -123,6 +124,12 @@ add_executable(marker_detection_node src/marker_detection_node.cpp)
    ${OpenCV_LIBRARIES}
    ${aruco_LIBS}
  )
+
+  target_link_libraries(marker_distance_finding_node
+    ${catkin_LIBRARIES}
+    ${OpenCV_LIBRARIES}
+    ${aruco_LIBS}
+  )
 
 #############
 ## Install ##
