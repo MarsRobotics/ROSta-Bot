@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 import rospy, serial, time
 from std_msgs.msg import Char
 
@@ -13,8 +14,8 @@ from std_msgs.msg import Char
 class animaticsMotorController:
     FORWARD_LABEL = 1
     BACKWARD_LABEL = 2
-    LEFT_TURN_LABEL = 3;
-    RIGHT_TURN_LABEL = 4;
+    LEFT_TURN_LABEL = 3
+    RIGHT_TURN_LABEL = 4
 
 
     SPEED_SLOW = 100000
@@ -26,10 +27,10 @@ class animaticsMotorController:
     rightAddress = chr(130) + " "
 
     currentDir = FORWARD_LABEL
-    currentSpeed = SPEED_MEDIUM
+    currentSpeed = 0
     
-    lastSpeedUpdate = 0;
-    lastDirUpdate = 0;
+    lastSpeedUpdate = 0
+    lastDirUpdate = 0
     ##
     # __init__
     #
@@ -51,18 +52,18 @@ class animaticsMotorController:
         rospy.init_node("atp_animatics_motors")
         rospy.spin()
 
-    def speed_changed(self, newSpeed)
+    def speed_changed(self, newSpeed):
         # For now, tie into existing sabertooth speeds. 100+ is normal, less is slow.
         if newSpeed < 100:
-            self.currentSpeed = SPEED_SLOW
+            self.currentSpeed = self.SPEED_SLOW
         elif newSpeed == 0:
             self.currentSpeed = 0
-        else
-            self.currentSpeed = SPEED_MEDIUM
+        else:
+            self.currentSpeed = self.SPEED_MEDIUM
             
-        if newSpeed != lastSpeedUpdate:
-            lastSpeedUpdate = newSpeed
-            newDriveCommand()
+        if newSpeed != self.lastSpeedUpdate:
+            self.lastSpeedUpdate = newSpeed
+            self.newDriveCommand()
     
     ##
     # dir_changed
@@ -72,12 +73,12 @@ class animaticsMotorController:
     # Parameters:
     #   newDir: the intended direction-of-travel constant (FORWARD_LABEL, LEFT_TURN_LABEL, etc).
     #
-    def dir_changed(self, newDir)
-        if 0 < newDir and 5 > newDir:
-            currentDir = newDir
-            if newDir != lastDirUpdate:
-                lastDirUpdate = newDir
-                newDriveCommand()
+    def dir_changed(self, newDir):
+        if (0 < newDir) and (5 > newDir):
+            self.currentDir = newDir
+            if newDir != self.lastDirUpdate:
+                self.lastDirUpdate = newDir
+                self.newDriveCommand()
 
     ##
     # newDriveCommand
@@ -224,7 +225,7 @@ class animaticsMotorController:
 #
 # Runs the robot forward for 5 seconds and then stops
 #
-# con = animaticsMotorController('/dev/ttyUSB0')
+con = animaticsMotorController('/dev/ttyUSB0')
 # con.driveLeft(1000)
 # con.driveRight(1000)
 #

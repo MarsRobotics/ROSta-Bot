@@ -85,6 +85,4 @@ class SimpleStateMachine:
         # Data has changed! Tick the state machine!
         ssm.woodenStateMachine.tick()
 
-
-print("compiled!")
 ssm = SimpleStateMachine()
