@@ -1,0 +1,17 @@
+<library path="src">
+  <class name="Plugin" type="manual_interface_node.Gui" base_class_type="rqt_gui_py::Plugin">
+    <description>
+      A Python GUI plugin.
+    </description>
+    <qtgui>
+      <group>
+        <label>Logging</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to logging.</statustip>
+      </group>
+      <label>Bag</label>
+      <icon type="theme">applications-other</icon>
+      <statustip>A Python GUI plugin.</statustip>
+    </qtgui>
+  </class>
+</library>

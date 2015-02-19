@@ -7,3 +7,5 @@ devel/
 srb_gen/
 .idea
 .catkin_workspace
+**/*.pyc
+**/*.*~
