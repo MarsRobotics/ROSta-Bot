@@ -52,6 +52,39 @@ class GUI(QtGui.QWidget):
         btnLft.resize(btn.sizeHint())
         btnLft.move(w-200, h-155)
 
+        #Textbox
+        lblMsg = QtGui.QLabel('Message', self)
+        lblMsg.move(w-300, h-80)
+        message = QtGui.QLineEdit(self)
+        message.move(w-300, h-50)
+
+        #ROS topic
+        lblROStop = QtGui.QLabel('ROS Topic', self)
+        lblROStop.move(50, h-80)
+        combo = QtGui.QComboBox(self)
+        combo.addItem("Meow")
+        combo.addItem("Chickens")
+        combo.addItem("Rabbits")
+        combo.addItem("Chinchillas")
+        combo.addItem("Puppies")
+        combo.move(50, h-50)
+
+        #Numeric Data
+        lblNum = QtGui.QLabel('Numeric Data', self)
+        lblNum.move(w-200, 150)
+
+        #Sensor Data
+        lblSenData = QtGui.QLabel('Sensor Data', self)
+        lblSenData.move(w-200, 20)
+
+        #chick pic
+        hbox = QtGui.QHBoxLayout(self)
+        pixmap = QtGui.QPixmap("baby chick.png")
+        chick = QtGui.QLabel(self)
+        chick.setPixmap(pixmap)
+        hbox.addWidget(chick)
+        self.setLayout(hbox)
+
         #locates window on screen and sets size
         self.setGeometry(300, 300, w, h)
         self.setWindowTitle('Hello Meow')
