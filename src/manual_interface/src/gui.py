@@ -17,6 +17,14 @@ class GUI(QtGui.QWidget):
         w = 550
         h = 450
 
+        #chick pic
+        hbox = QtGui.QHBoxLayout(self)
+        pixmap = QtGui.QPixmap("baby chick.png")
+        chick = QtGui.QLabel(self)
+        chick.setPixmap(pixmap)
+        hbox.addWidget(chick)
+        self.setLayout(hbox)
+
         #kill button
         btn = QtGui.QPushButton('KILL', self)
         btn.setToolTip('<b>Kill Power</b>')
@@ -55,8 +63,8 @@ class GUI(QtGui.QWidget):
         #Textbox
         lblMsg = QtGui.QLabel('Message', self)
         lblMsg.move(w-300, h-80)
-        message = QtGui.QLineEdit(self)
-        message.move(w-300, h-50)
+        msg = QtGui.QLineEdit(self)
+        msg.move(w-300, h-50)
 
         #ROS topic
         lblROStop = QtGui.QLabel('ROS Topic', self)
@@ -76,14 +84,6 @@ class GUI(QtGui.QWidget):
         #Sensor Data
         lblSenData = QtGui.QLabel('Sensor Data', self)
         lblSenData.move(w-200, 20)
-
-        #chick pic
-        hbox = QtGui.QHBoxLayout(self)
-        pixmap = QtGui.QPixmap("baby chick.png")
-        chick = QtGui.QLabel(self)
-        chick.setPixmap(pixmap)
-        hbox.addWidget(chick)
-        self.setLayout(hbox)
 
         #locates window on screen and sets size
         self.setGeometry(300, 300, w, h)
