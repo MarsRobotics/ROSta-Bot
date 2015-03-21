@@ -109,12 +109,13 @@ int main(int argc,char **argv) {
 
 				// brute force way to set up the camera matrix and parameters...may need to calibrate using ArUco
 				// if we do decide to use a calibrated parameter, then get ride of these lines...
-				cv::Mat CamMatrix = cv::Mat::eye(3, 3, CV_32F);
-				CamMatrix.at<float>(0, 0) = 500;
-				CamMatrix.at<float>(1, 1) = 500;
-				CamMatrix.at<float>(0, 2) = inputImageCopy.size().width / 2;
-				CamMatrix.at<float>(1, 2) = inputImageCopy.size().height / 2;
-				cameraParams.setParams(CamMatrix, cv::Mat::zeros(1, 5, CV_32F), inputImageCopy.size());
+				// we read from a board configuration, so probably dont need to do this. hopefully
+				// cv::Mat CamMatrix = cv::Mat::eye(3, 3, CV_32F);
+				//CamMatrix.at<float>(0, 0) = 500;
+				//CamMatrix.at<float>(1, 1) = 500;
+				//CamMatrix.at<float>(0, 2) = inputImageCopy.size().width / 2;
+				//CamMatrix.at<float>(1, 2) = inputImageCopy.size().height / 2;
+				//cameraParams.setParams(CamMatrix, cv::Mat::zeros(1, 5, CV_32F), inputImageCopy.size());
 
 				vector <cv::Point3f> objPoints;
 				vector <cv::Point2f> imgPoints;
