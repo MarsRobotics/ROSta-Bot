@@ -40,16 +40,17 @@ class animaticsMotorController:
     #  motorPath: File path of the serial port
     #
     def __init__(self, motorPath):
-        self.serialPort = serial.Serial(motorPath)
-
+        #TODO: Don't hard-code this
+        self.serialPort = serial.Serial('/dev/ttyUSB0')
         self.write("ZS ")           # Reset
-        self.write("MV ")           # Mode Velocity
+        self.write("MV ")        # Mode Velocity
         self.write("EIGN(2) ")
         self.write("EIGN(3) ")
         self.write("ADT=100 ")      # Acceleration
         self.speed_subscriber = rospy.Subscriber("drive_speed", Char, self.speed_changed)
         self.dir_subscriber = rospy.Subscriber("drive_direction", Char, self.dir_changed)
         rospy.init_node("atp_animatics_motors")
+        print "ATP Motor Controller Initialized."
         rospy.spin()
 
     def speed_changed(self, newSpeedData):
@@ -126,10 +127,10 @@ class animaticsMotorController:
         command = command.strip() + " "
         # print command
         self.serialPort.write(command)
-        print "Sending the following command: " + command
+        print "Sending the following command: \'" + command + "\'"
         # Don't do it this way. Otherwise we will forget this is happening
         # when we are trying to debug it
-        #time.sleep(self.delayTime)
+        time.sleep(0.1)
 
     ##
     # driveLeft
@@ -163,7 +164,6 @@ class animaticsMotorController:
 
         # address the right wheels
         self.write(self.rightAddress)
-
         self.write("VT=" + str(0-velocity) + " ")
         self.write("G ")
 
