@@ -15,9 +15,8 @@ const Scalar COLOR = (0, 0, 255);
 //Delay before next image retrieval
 const int WAIT_TIME = 2;
 
-//The size of the marker in meters
-const float MARKER_SIZE = .16;
-const float DISTANCE_CONSTANT = 7183.16666666666666;
+//Correction factor for the Z-value (distance between marker and camera).
+const float Z_VALUE_CORRECTION = -1.140;
 
 //Integer representation of which keyboard key was pressed
 int inputKey = 0;
@@ -135,7 +134,7 @@ int main(int argc,char **argv) {
 				cv::Mat cameraTranslationVector = -R.t() * tvec;
 
 				// print the translation vectors (distance between marker and camera in x, y, z direction)
-				cout << "Camera position " << cameraTranslationVector.at<double>(0) << ", " << cameraTranslationVector.at<double>(1) << ", " << cameraTranslationVector.at<double>(2) << endl;
+				cout << "Camera position " << cameraTranslationVector.at<double>(0) << ", " << cameraTranslationVector.at<double>(1) << ", " << cameraTranslationVector.at<double>(2) * Z_VALUE_CORRECTION << endl;
 
 				// print the pose vectors (orientation between marker and camera in x,y,z direction -- angle of rotation for each)
 				cout << "Camera pose " << cameraRotationVector.at<double>(0) << ", " << cameraRotationVector.at<double>(1) << ", " << cameraRotationVector.at<double>(2) << endl;
