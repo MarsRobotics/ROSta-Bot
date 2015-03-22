@@ -47,12 +47,13 @@ class animaticsMotorController:
         self.write("EIGN(2) ")
         self.write("EIGN(3) ")
         self.write("ADT=100 ")      # Acceleration
-        self.speed_subscriber = rospy.Subscriber("drive_speed", Char, lambda: self.speed_changed)
-        self.dir_subscriber = rospy.Subscriber("drive_direction", Char, lambda: self.dir_changed)
+        self.speed_subscriber = rospy.Subscriber("drive_speed", Char, self.speed_changed)
+        self.dir_subscriber = rospy.Subscriber("drive_direction", Char, self.dir_changed)
         rospy.init_node("atp_animatics_motors")
         rospy.spin()
 
-    def speed_changed(self, newSpeed):
+    def speed_changed(self, newSpeedData):
+        newSpeed = newSpeedData.data
         # For now, tie into existing sabertooth speeds. 100+ is normal, less is slow.
         if newSpeed < 100:
             self.currentSpeed = self.SPEED_SLOW
@@ -73,7 +74,8 @@ class animaticsMotorController:
     # Parameters:
     #   newDir: the intended direction-of-travel constant (FORWARD_LABEL, LEFT_TURN_LABEL, etc).
     #
-    def dir_changed(self, newDir):
+    def dir_changed(self, newDirData):
+        newDir = newDirData.data
         if (0 < newDir) and (5 > newDir):
             self.currentDir = newDir
             if newDir != self.lastDirUpdate:
@@ -124,7 +126,7 @@ class animaticsMotorController:
         command = command.strip() + " "
         # print command
         self.serialPort.write(command)
-
+        print "Sending the following command: " + command
         # Don't do it this way. Otherwise we will forget this is happening
         # when we are trying to debug it
         #time.sleep(self.delayTime)
