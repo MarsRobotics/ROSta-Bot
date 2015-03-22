@@ -3,8 +3,14 @@
 #include <aruco/cvdrawingutils.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <ros/ros.h>
+#include <std_msgs/String.h>
+#include </home/viki/ROSta-Bot/devel/include/position_sensoring/position.h>
+
 using namespace cv;
 using namespace aruco;
+using namespace position_sensoring;
+
 
 //Width of line to highlight marker with
 const int LINE_WIDTH = 1;
@@ -53,6 +59,14 @@ void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv:
 }
 
 int main(int argc,char **argv) {
+	ros::init(argc, argv, "position_sensor");
+  	ros::NodeHandle n;
+
+   	// publish to topic "target_distance", hold 1000 of these message in the buffer before disarding
+	ros::Publisher pub = n.advertise<std_msgs::String>("target_distance", 1000);
+
+	position_sensoring::position msg;
+  	
 	try {
 		if (argc != 3) {
 			cerr << "Usage: boardConfig.yml camera_config.yml " << endl;
@@ -140,6 +154,16 @@ int main(int argc,char **argv) {
 				// print the pose vectors (orientation between marker and camera in x,y,z direction -- angle of rotation for each)
 				cout << "Camera pose " << cameraRotationVector.at<double>(0) << ", " << cameraRotationVector.at<double>(1) << ", " << cameraRotationVector.at<double>(2) << endl;
 
+				msg.xDistance = cameraTranslationVector.at<double>(0);
+				msg.yDistance = cameraTranslationVector.at<double>(1);
+				msg.zDistance = cameraTranslationVector.at<double>(2);
+
+				msg.xPose = cameraRotationVector.at<double>(0);
+				msg.yPose = cameraRotationVector.at<double>(1);
+				msg.zPose = cameraRotationVector.at<double>(2);
+
+ 				pub.publish(msg);
+
 				m.draw(inputImageCopy, COLOR, LINE_WIDTH);
 			}
 			// update the frame!
@@ -147,6 +171,9 @@ int main(int argc,char **argv) {
 
 			//Check if the stop (ESC) button has been pressed
 			inputKey = cv::waitKey(WAIT_TIME);
+				
+			// not sure where this really belongs...
+  			ros::spinOnce();
 		}
 
 		return 0;
