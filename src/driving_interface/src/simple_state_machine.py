@@ -7,6 +7,7 @@ from std_msgs.msg import Int64
 sys.path.append("/home/viki/ROSta-Bot/src/transporter/src")
 from transport_drive_motor_API import *
 from state_machine import *
+from driving_interface.msg import position
 
 
 # This is a simple 3-state machine. It moves the robot to a predetermined distance from the bin.
@@ -54,7 +55,7 @@ class SimpleStateMachine:
         # Subscribe to the "target distance" topic (note that this topic may not be active / may need to be
         # manually set).
         #rospy.init_node("simple_state_machine")
-        self.target_distance_subscriber = rospy.Subscriber("target_distance", Int64, lambda: self.target_distance_changed)
+        self.target_distance_subscriber = rospy.Subscriber("target_distance", position, lambda: self.target_distance_changed)
         # Subscribe to the current distance from the target. For now, that's an IR value.
         self.current_distance_subscriber = rospy.Subscriber("range_data", Int64, lambda: self.current_distance_reading_changed)
 
