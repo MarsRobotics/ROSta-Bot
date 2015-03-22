@@ -228,14 +228,12 @@ class animaticsMotorController:
 # Runs the robot forward for 5 seconds and then stops
 #
 con = animaticsMotorController('/dev/ttyUSB0')
-# con.driveLeft(1000)
-# con.driveRight(1000)
-#
-# time.sleep(5)
-#
-# con.stopLeft()
-# con.stopRight()
-# con.close()
+con.driveLeft(1000)
+con.driveRight(1000)
+time.sleep(5)
+con.stopLeft()
+con.stopRight()
+con.close()
 
 
         
