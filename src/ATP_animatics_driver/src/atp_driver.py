@@ -56,10 +56,10 @@ class animaticsMotorController:
     def speed_changed(self, newSpeedData):
         newSpeed = newSpeedData.data
         # For now, tie into existing sabertooth speeds. 100+ is normal, less is slow.
-        if newSpeed < 100:
-            self.currentSpeed = self.SPEED_SLOW
-        elif newSpeed == 0:
+        if newSpeed == 0:
             self.currentSpeed = 0
+        elif newSpeed < 100:
+            self.currentSpeed = self.SPEED_SLOW
         else:
             self.currentSpeed = self.SPEED_MEDIUM
             
@@ -228,11 +228,11 @@ class animaticsMotorController:
 # Runs the robot forward for 5 seconds and then stops
 #
 con = animaticsMotorController('/dev/ttyUSB0')
-con.driveLeft(1000)
-con.driveRight(1000)
-time.sleep(5)
-con.stopLeft()
-con.stopRight()
+#con.driveLeft(100000)
+#con.driveRight(100000)
+#time.sleep(5)
+#con.stopLeft()
+#con.stopRight()
 con.close()
 
 

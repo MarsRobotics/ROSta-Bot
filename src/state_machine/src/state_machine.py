@@ -74,5 +74,7 @@ class StateMachine:
     # Description: executes the states function and then transitions to the next function
     #
     def tick(self):
-        self.currentState.onTick()
-        self.currentState = self.currentState.getNextState()
+       print "Ticked on state: " + self.currentState.name
+       self.currentState = self.currentState.getNextState()
+       self.currentState.onTick()  
+       print "Transitioning AND EXECUTING state: " + self.currentState.name
