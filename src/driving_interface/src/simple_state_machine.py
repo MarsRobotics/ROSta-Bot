@@ -58,7 +58,7 @@ class SimpleStateMachine:
         self.target_distance_subscriber = rospy.Subscriber("target_distance", position, lambda: self.target_distance_changed)
         # Subscribe to the current distance from the target. For now, that's an IR value.
         self.current_distance_subscriber = rospy.Subscriber("range_data", Int64, lambda: self.current_distance_reading_changed)
-
+	
         #spin for all eternity. Note that, in Python, each ROS callback NEEDS TO TICK THE STATE MACHINE.
         rospy.spin()
 
@@ -78,7 +78,8 @@ class SimpleStateMachine:
     # this should, for the time being, be a value between 30cm and 150cm.
     # Once the distance is not IR-dependent, this range can expand.
     def target_distance_changed(self, new_target_distance):
-        self.targetDistance = new_target_distance
+        self.targetDistance = new_target_distance.x_distance
+	print self.targetDistance
         # Data has changed! Tick the state machine!
         ssm.woodenStateMachine.tick()
 
