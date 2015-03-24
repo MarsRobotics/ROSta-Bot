@@ -154,13 +154,14 @@ int main(int argc,char **argv) {
 				// print the pose vectors (orientation between marker and camera in x,y,z direction -- angle of rotation for each)
 				cout << "Camera pose " << cameraRotationVector.at<double>(0) << ", " << cameraRotationVector.at<double>(1) << ", " << cameraRotationVector.at<double>(2) << endl;
 
-				msg.xDistance = cameraTranslationVector.at<double>(0);
-				msg.yDistance = cameraTranslationVector.at<double>(1);
-				msg.zDistance = cameraTranslationVector.at<double>(2);
+				// converting data from meters to centimeters
+				msg.xDistance = cameraTranslationVector.at<double>(0) * 100.0;
+				msg.yDistance = cameraTranslationVector.at<double>(1) * 100.0;
+				msg.zDistance = cameraTranslationVector.at<double>(2) * 100.0;
 
-				msg.xPose = cameraRotationVector.at<double>(0);
-				msg.yPose = cameraRotationVector.at<double>(1);
-				msg.zPose = cameraRotationVector.at<double>(2);
+				msg.xPose = cameraRotationVector.at<double>(0) * 100.0;
+				msg.yPose = cameraRotationVector.at<double>(1) * 100.0;
+				msg.zPose = cameraRotationVector.at<double>(2) * 100.0;
 
  				pub.publish(msg);
 
