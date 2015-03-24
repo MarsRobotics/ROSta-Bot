@@ -1,11 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(State_machine)
+project(ATP_animatics_driver)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
   rospy
   std_msgs
 )
@@ -81,8 +80,8 @@ find_package(catkin REQUIRED COMPONENTS
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES State_machine
-#  CATKIN_DEPENDS roscpp rospy std_msgs
+#  LIBRARIES ATP_animatics_driver
+#  CATKIN_DEPENDS rospy std_msgs
 #  DEPENDS system_lib
 )
 
@@ -98,19 +97,19 @@ include_directories(
 )
 
 ## Declare a cpp library
-# add_library(State_machine
-#   src/${PROJECT_NAME}/State_machine.cpp
+# add_library(ATP_animatics_driver
+#   src/${PROJECT_NAME}/ATP_animatics_driver.cpp
 # )
 
 ## Declare a cpp executable
-# add_executable(State_machine_node src/State_machine_node.cpp)
+# add_executable(ATP_animatics_driver_node src/ATP_animatics_driver_node.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
-# add_dependencies(State_machine_node State_machine_generate_messages_cpp)
+# add_dependencies(ATP_animatics_driver_node ATP_animatics_driver_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(State_machine_node
+# target_link_libraries(ATP_animatics_driver_node
 #   ${catkin_LIBRARIES}
 # )
 
@@ -129,7 +128,7 @@ include_directories(
 # )
 
 ## Mark executables and/or libraries for installation
-# install(TARGETS State_machine State_machine_node
+# install(TARGETS ATP_animatics_driver ATP_animatics_driver_node
 #   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
 #   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
@@ -154,7 +153,7 @@ include_directories(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_State_machine.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_ATP_animatics_driver.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()
