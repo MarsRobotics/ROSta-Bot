@@ -5,7 +5,7 @@
 #include <opencv2/calib3d/calib3d.hpp>
 #include <ros/ros.h>
 #include <std_msgs/String.h>
-#include </home/viki/ROSta-Bot/devel/include/position_sensoring/position.h>
+#include </home/pi/ROSta-Bot/devel/include/position_sensoring/position.h>
 
 using namespace cv;
 using namespace aruco;
@@ -63,8 +63,7 @@ int main(int argc,char **argv) {
   	ros::NodeHandle n;
 
    	// publish to topic "target_distance", hold 1000 of these message in the buffer before disarding
-	ros::Publisher pub = n.advertise<std_msgs::String>("target_distance", 1000);
-
+	ros::Publisher pub = n.advertise<position_sensoring::position>("range_data", 1000);
 	position_sensoring::position msg;
   	
 	try {
@@ -97,7 +96,7 @@ int main(int argc,char **argv) {
 		videoCapture >> inputImage;
 
 		//create the gui
-		cv::namedWindow("output video", CV_WINDOW_AUTOSIZE);
+//		cv::namedWindow("output video", CV_WINDOW_AUTOSIZE);
 
 		boardDetector.setParams(boardConfig, cameraParams);
 
@@ -168,7 +167,7 @@ int main(int argc,char **argv) {
 				m.draw(inputImageCopy, COLOR, LINE_WIDTH);
 			}
 			// update the frame!
-			cv::imshow("output video", inputImageCopy);
+			//cv::imshow("output video", inputImageCopy);
 
 			//Check if the stop (ESC) button has been pressed
 			inputKey = cv::waitKey(WAIT_TIME);

@@ -7,6 +7,7 @@ from std_msgs.msg import Int64
 sys.path.append("/home/pi/ROSta-Bot/src/transporter/src")
 from transport_drive_motor_API import *
 from state_machine import *
+from driving_interface.msg import position
 
 # This is a simple 3-state machine. It moves the robot to a predetermined distance from the bin.
 #
@@ -48,7 +49,7 @@ class SimpleStateMachine:
         drivingBackwards.addTransition("Keep moving away from the target", lambda: True, drivingBackwards)
         # All measurements are in Centimeters.
         # How far away from the target do we want to be? (cm)
-        self.targetDistance = 100
+        self.targetDistance = 250
         # How far away from the target are we, currently? (cm)
         self.currentDistance = 100
         # How far away from the target can we be and still be 'close enough'? (cm)
@@ -58,7 +59,7 @@ class SimpleStateMachine:
         #rospy.init_node("simple_state_machine")
         self.target_distance_subscriber = rospy.Subscriber("target_distance", Int64, self.target_distance_changed)
         # Subscribe to the current distance from the target. For now, that's an IR value.
-        self.current_distance_subscriber = rospy.Subscriber("range_data", Int64, self.current_distance_reading_changed)
+        self.current_distance_subscriber = rospy.Subscriber("range_data", position, self.current_distance_reading_changed)
 
         #spin for all eternity. Note that, in Python, each ROS callback NEEDS TO TICK THE STATE MACHINE.
         rospy.spin()
@@ -84,7 +85,7 @@ class SimpleStateMachine:
         self.woodenStateMachine.tick()
 
     def current_distance_reading_changed(self, new_current_distance):
-        self.currentDistance = new_current_distance.data
+        self.currentDistance = -1.0 * new_current_distance.zDistance
         print "New Range Sensor data received by the state machine: " + str(self.currentDistance)
         # Data has changed! Tick the state machine!
         self.woodenStateMachine.tick()

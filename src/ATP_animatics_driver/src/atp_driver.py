@@ -28,7 +28,7 @@ class animaticsMotorController:
 
     currentDir = FORWARD_LABEL
     currentSpeed = 0
-    
+    previousSpeed = 0    
     lastSpeedUpdate = 0
     lastDirUpdate = 0
     ##
@@ -91,6 +91,8 @@ class animaticsMotorController:
     #
     #
     def newDriveCommand(self):
+        if self.currentSpeed == self.previousSpeed:
+            return
         # If the speed is zero, stop moving!
         if self.currentSpeed == 0:
             self.stopLeft()
@@ -113,6 +115,7 @@ class animaticsMotorController:
             else:
                 self.stopLeft()
                 self.stopRight()
+        self.previousSpeed = self.currentSpeed
     ##
     # write
     #
@@ -130,7 +133,7 @@ class animaticsMotorController:
         print "Sending the following command: \'" + command + "\'"
         # Don't do it this way. Otherwise we will forget this is happening
         # when we are trying to debug it
-        time.sleep(0.1)
+        # time.sleep(0.1)
 
     ##
     # driveLeft
