@@ -18,12 +18,15 @@ class GUI(QtGui.QWidget):
         h = 450
 
         #chick pic
-        hbox = QtGui.QHBoxLayout(self)
-        pixmap = QtGui.QPixmap("baby chick.png")
+        pixmap = QtGui.QPixmap("baby chick.png").scaledToHeight(30).scaledToWidth(40)
         chick = QtGui.QLabel(self)
         chick.setPixmap(pixmap)
-        hbox.addWidget(chick)
-        self.setLayout(hbox)
+        pixmap = QtGui.QPixmap("bunny.png").scaledToHeight(30).scaledToWidth(40)
+        bunny = QtGui.QLabel(self)
+        bunny.setPixmap(pixmap)
+        bunny.move(40, 0)
+
+
 
         #kill button
         btn = QtGui.QPushButton('KILL', self)
