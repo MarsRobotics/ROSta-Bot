@@ -27,6 +27,16 @@ class GUI(QtGui.QWidget):
         bunny.move(40, 0)
 
 
+        table = QtGui.QTableWidget(self)
+        headers = []
+        for row in range(0, 3):
+            headers.append("header")
+            for col in range(0, 3):
+                table.setItem(row, col, QtGui.QTableWidgetItem("hello"))
+        table.setHorizontalHeaderLabels(headers)
+        table.show()
+        table.move(30, 50)
+        table.setStyle(QtGui.QStyle())
 
         #kill button
         btn = QtGui.QPushButton('KILL', self)
