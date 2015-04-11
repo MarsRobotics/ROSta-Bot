@@ -39,6 +39,10 @@ int DELAY = 0;
 int CLOCKWISE = HIGH;
 int COUNTERCLOCKWISE = LOW;
 
+void desiredCameraPosChanged(const std_msgs::Int32& newPos);
+void driveUp(void);
+void driveDown(void);
+
 ros::Subscriber<std_msgs::Int32> cvDegreeReader("camera_angle", &desiredCameraPosChanged);
 
 void setup(){
@@ -55,7 +59,7 @@ void setup(){
 void loop()
 {
 	nh.spinOnce();
-	delayMicroseconds(100000);
+	delayMicroseconds(1000);
 }
 
 void desiredCameraPosChanged( const std_msgs::Int32& newPos){
@@ -76,6 +80,7 @@ void desiredCameraPosChanged( const std_msgs::Int32& newPos){
   {
 	  driveDown();
   }
+}
   
   // increasing the count means we want to move clockwise (right)
   void driveUp()
@@ -90,7 +95,6 @@ void desiredCameraPosChanged( const std_msgs::Int32& newPos){
 		digitalWrite(PULSE_PIN, LOW);
 		++stepCount;
 	}
-  digitalWrite(ENABLE, HIGH); //the motor should not make loud screeching
   }
   
   // Decreasing the step means we want to move counter-clockwise (left).
@@ -106,8 +110,6 @@ void desiredCameraPosChanged( const std_msgs::Int32& newPos){
 		digitalWrite(PULSE_PIN, LOW);
 		--stepCount;
 	}
-  digitalWrite(ENABLE, HIGH); //the motor should not make loud screeching
   }
-  
-}
+
  
