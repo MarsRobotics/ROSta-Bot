@@ -18,16 +18,30 @@ class GUI(QtGui.QWidget):
         h = 450
 
         #chick pic
-        pixmap = QtGui.QPixmap("baby chick.png").scaledToHeight(30).scaledToWidth(40)
+        pixmap = QtGui.QPixmap("baby chick.png").scaledToHeight(130).scaledToWidth(150)
         chick = QtGui.QLabel(self)
         chick.setPixmap(pixmap)
-        pixmap = QtGui.QPixmap("bunny.png").scaledToHeight(30).scaledToWidth(40)
+        chick.move(10, 20)
+
+        #bunny pic
+        pixmap = QtGui.QPixmap("bunny.png").scaledToHeight(150).scaledToWidth(100)
         bunny = QtGui.QLabel(self)
         bunny.setPixmap(pixmap)
-        bunny.move(40, 0)
+        bunny.move(180, 20)
 
+        #chinchilla pic
+        pixmap = QtGui.QPixmap("baby chinchilla.jpg").scaledToHeight(200).scaledToWidth(140)
+        chilla = QtGui.QLabel(self)
+        chilla.setPixmap(pixmap)
+        chilla.move(10, 220)
 
-        table = QtGui.QTableWidget(self)
+        #puppies pic
+        pixmap = QtGui.QPixmap("puppies.JPG").scaledToHeight(130).scaledToWidth(140)
+        pup = QtGui.QLabel(self)
+        pup.setPixmap(pixmap)
+        pup.move(180, 220)
+
+        """table = QtGui.QTableWidget(self)
         headers = []
         for row in range(0, 3):
             headers.append("header")
@@ -36,7 +50,7 @@ class GUI(QtGui.QWidget):
         table.setHorizontalHeaderLabels(headers)
         table.show()
         table.move(30, 50)
-        table.setStyle(QtGui.QStyle())
+        table.setStyle(QtGui.QStyle())"""
 
         #kill button
         btn = QtGui.QPushButton('KILL', self)
