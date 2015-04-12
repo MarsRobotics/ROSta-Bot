@@ -43,7 +43,10 @@ void desiredCameraPosChanged(const std_msgs::Int32& newPos);
 void driveUp(void);
 void driveDown(void);
 
-ros::Subscriber<std_msgs::Int32> cvDegreeReader("camera_angle", &desiredCameraPosChanged);
+ros::Subscriber<std_msgs::Int32> cvDegreeReader("target_camera_angle", &desiredCameraPosChanged);
+
+std_msgs::Int32 currentCameraAngle;
+ros::Publisher cvDegreePublisher("current_camera_angle", &currentCameraAngle);
 
 void setup(){
 
@@ -54,6 +57,7 @@ void setup(){
   digitalWrite(ENABLE, HIGH); //the motor should not make loud screeching
   nh.initNode();
   nh.subscribe(cvDegreeReader);
+  nh.advertise(cvDegreePublisher);
   //Serial.begin(9600);
 }
 
@@ -73,12 +77,6 @@ void rotateToFaceAngle(int angle)
     desiredDegrees = angle % 360;
     // Step = Degrees / steps per degree * gear ratio
     desiredStep = int(desiredDegrees/stepDegree)*19;
-    Serial.print("Going to degree: ");
-    Serial.print(desiredDegrees); 
-    Serial.print(" (Desired step: ");
-    Serial.print(desiredStep);
-    Serial.print("; current step: ");
-    Serial.println(stepCount);
   if(stepCount == desiredStep)
   {
 	  return;
@@ -95,7 +93,9 @@ void rotateToFaceAngle(int angle)
 
 void desiredCameraPosChanged( const std_msgs::Int32& newPos){
     desiredDegrees = newPos.data;
-    rotateToFaceAngle(desiredDegrees);
+    currentCameraAngle.data = desiredDegrees;
+	rotateToFaceAngle(desiredDegrees);
+	cvDegreePublisher.publish(&currentCameraAngle);
 }
 
 
