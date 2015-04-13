@@ -11,37 +11,27 @@ using namespace cv;
 using namespace aruco;
 using namespace position_sensoring;
 
-
-//Width of line to highlight marker with
-const int LINE_WIDTH = 1;
-
-//Color to highlight marker lines with
-const Scalar COLOR = (0, 0, 255);
-
-//Delay before next image retrieval
-const int WAIT_TIME = 2;
-
-//The size of the marker in meters
-const float MARKER_SIZE = .16;
-const float DISTANCE_CONSTANT = 7183.16666666666666;
-
-//Integer representation of which keyboard key was pressed
-int inputKey = 0;
-
-//Path to files
-string boardConfigFile;
-string cameraConfigFile;
-
-VideoCapture videoCapture;
-Mat inputImage,inputImageCopy;
-BoardConfiguration boardConfig;
-BoardDetector boardDetector;
-CameraParameters cameraParams;
-Mat rvec, tvec;		// for storing translation and rotation matrices
-
-int boardHeight = 500;
-int boardWidth = 500;
-Vector<Marker> markers;
+////Delay before next image retrieval
+//const int WAIT_TIME = 2;
+//
+////The size of the marker in meters
+//const float MARKER_SIZE = .16;
+//const float DISTANCE_CONSTANT = 7183.16666666666666;
+//
+////Path to files
+//string boardConfigFile;
+//string cameraConfigFile;
+//
+//VideoCapture videoCapture;
+//Mat inputImage,inputImageCopy;
+//BoardConfiguration boardConfig;
+//BoardDetector boardDetector;
+//CameraParameters cameraParams;
+//Mat rvec, tvec;		// for storing translation and rotation matrices
+//
+//int boardHeight = 500;
+//int boardWidth = 500;
+//Vector<Marker> markers;
 
 // Copied from ArUco library
 void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv::Point2f> &imagePoints) {
@@ -58,13 +48,27 @@ void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv:
     }
 }
 
+/**
+ * current_camera_angle callback
+ */
+void current_camera_angle_callback(const std_msgs::StringConstPtr& message) {
+	// check if the center of the camera is past a certain threshold,
+	// then turn camera if it is
+
+}
+
 int main(int argc,char **argv) {
 	ros::init(argc, argv, "position_sensor");
   	ros::NodeHandle n;
 
-   	// publish to topic "target_distance", hold 1000 of these message in the buffer before disarding
-	ros::Publisher pub = n.advertise<position_sensoring::position>("range_data", 1000);
-	position_sensoring::position msg;
+   	// publish to topic "target_distance", hold 1000 of these message in the buffer before discarding
+	ros::Publisher positionPub = n.advertise<position_sensoring::position>("range_data", 1000);
+	position_sensoring::position positionMsg;
+
+	// publish to the topic "marker_visible" hold 1000 of these messages in the buffer before discarding
+	ros::Publisher markerPub = n.advertise<position_sensoring::marker_version>("is_marker_visible", 1000);
+	position_sensoring::marker_version markerMsg;
+
   	
 	try {
 		if (argc != 3) {
@@ -95,17 +99,12 @@ int main(int argc,char **argv) {
 		//read an image from camera
 		videoCapture >> inputImage;
 
-		//create the gui
-//		cv::namedWindow("output video", CV_WINDOW_AUTOSIZE);
-
 		boardDetector.setParams(boardConfig, cameraParams);
 
-		while (inputKey != 27 && videoCapture.grab()) {
+		while (videoCapture.grab()) {
 			//retrieve an image from the camera
 			videoCapture.retrieve(inputImage);
 
-			// save a copy of it somewhere, in case our calculations make changes
-			inputImage.copyTo(inputImageCopy);
 			boardDetector.detect(inputImage);
 
 			// detect the markers, and for each marker, determine pose and position
@@ -114,11 +113,11 @@ int main(int argc,char **argv) {
 				Marker m = markers[i];
 
 				//Display data to the meatbag humans
-				for (int i = 0; i < 4; i++) {
-					cout << "(" << m[i].x << "," << m[i].y << ") ";
-					Point2f a(m[i].x, m[i].y);
-				}
-				cout << endl;
+//				for (int i = 0; i < 4; i++) {
+//					cout << "(" << m[i].x << "," << m[i].y << ") ";
+//					Point2f a(m[i].x, m[i].y);
+//				}
+//				cout << endl;
 
 				// brute force way to set up the camera matrix and parameters...may need to calibrate using ArUco
 				// if we do decide to use a calibrated parameter, then get ride of these lines...
@@ -147,30 +146,26 @@ int main(int argc,char **argv) {
 				cv::Rodrigues(R.t(), cameraRotationVector);
 				cv::Mat cameraTranslationVector = -R.t() * tvec;
 
-				// print the translation vectors (distance between marker and camera in x, y, z direction)
-				cout << "Camera position " << cameraTranslationVector.at<double>(0) << ", " << cameraTranslationVector.at<double>(1) << ", " << cameraTranslationVector.at<double>(2) << endl;
-
-				// print the pose vectors (orientation between marker and camera in x,y,z direction -- angle of rotation for each)
-				cout << "Camera pose " << cameraRotationVector.at<double>(0) << ", " << cameraRotationVector.at<double>(1) << ", " << cameraRotationVector.at<double>(2) << endl;
+				// Don't print stuff to the screen, for SPEED.
+//				// print the translation vectors (distance between marker and camera in x, y, z direction)
+//				cout << "Camera position " << cameraTranslationVector.at<double>(0) << ", " << cameraTranslationVector.at<double>(1) << ", " << cameraTranslationVector.at<double>(2) << endl;
+//
+//				// print the pose vectors (orientation between marker and camera in x,y,z direction -- angle of rotation for each)
+//				cout << "Camera pose " << cameraRotationVector.at<double>(0) << ", " << cameraRotationVector.at<double>(1) << ", " << cameraRotationVector.at<double>(2) << endl;
 
 				// converting data from meters to centimeters
-				msg.xDistance = cameraTranslationVector.at<double>(0) * 100.0;
-				msg.yDistance = cameraTranslationVector.at<double>(1) * 100.0;
-				msg.zDistance = cameraTranslationVector.at<double>(2) * 100.0;
+				positionMsg.xDistance = cameraTranslationVector.at<double>(0) * 100.0;
+				positionMsg.yDistance = cameraTranslationVector.at<double>(1) * 100.0;
+				positionMsg.zDistance = cameraTranslationVector.at<double>(2) * 100.0;
 
-				msg.xPose = cameraRotationVector.at<double>(0) * 100.0;
-				msg.yPose = cameraRotationVector.at<double>(1) * 100.0;
-				msg.zPose = cameraRotationVector.at<double>(2) * 100.0;
+				positionMsg.xPose = cameraRotationVector.at<double>(0) * 100.0;
+				positionMsg.yPose = cameraRotationVector.at<double>(1) * 100.0;
+				positionMsg.zPose = cameraRotationVector.at<double>(2) * 100.0;
 
- 				pub.publish(msg);
+ 				positionPub.publish(positionMsg);
 
-				m.draw(inputImageCopy, COLOR, LINE_WIDTH);
+				//TODO: publish the marker vision thing here
 			}
-			// update the frame!
-			//cv::imshow("output video", inputImageCopy);
-
-			//Check if the stop (ESC) button has been pressed
-			inputKey = cv::waitKey(WAIT_TIME);
 				
 			// not sure where this really belongs...
   			ros::spinOnce();
