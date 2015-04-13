@@ -1,43 +1,46 @@
 /* RotatingCamera
-
-Authors: Derek Schumacher, Matt Delaney, and Fatima Dominguez
-
-Reads in a degree value from ROS and translates it to 
-a number of steps that will rotate the motor to the desired 
-degree.
-
-The circuit using a NEMA 14 and Microstep Driver- M6128 :
-[current: 1.25; Microstep = 1 (Full-step)]
-
-Red (A+)
-Green (A-)
-Yellow (B+)
-Blue (B-)
-
-PUL+ (pin 8)
-DIR+ (pin 9)
-
-ENA+ connected to ground
-ENA- connected to pin 10 (+5V when turning, otherwise 0V)
-
-*/
+ 
+ Authors: Derek Schumacher, Matt Delaney, and Fatima Dominguez
+ 
+ Reads in a degree value from ROS and translates it to 
+ a number of steps that will rotate the motor to the desired 
+ degree.
+ 
+ The circuit using a NEMA 14 and Microstep Driver- M6128 :
+ [current: 1.25; Microstep = 1 (Full-step)]
+ 
+ Red (A+)
+ Green (A-)
+ Yellow (B+)
+ Blue (B-)
+ 
+ PUL+ (pin 9)
+ DIR+ (pin 8)
+ 
+ ENA+ connected to ground
+ ENA- connected to pin 10 (+5V when turning, otherwise 0V)
+ 
+ */
 #include <ros.h>
 #include <std_msgs/Int32.h>
 
+
+const boolean USE_ROS = true;
+
 ros::NodeHandle nh;
-int DIRECTION_PIN = 8;
-int PULSE_PIN = 9;
-int ENABLE = 10;
+const int DIRECTION_PIN = 8;
+const int PULSE_PIN = 9;
+const int ENABLE = 10;
 int stepCount = 0;
 int desiredDegrees = 0;
 int beaconDegreeOffset = 0;
 double stepDegree = 0.094;
 int desiredStep = 0;
 // In testing it seems this is unecessary.
-int DELAY = 10;
+const int DELAY = 10;
 
-int CLOCKWISE = HIGH;
-int COUNTERCLOCKWISE = LOW;
+const int CLOCKWISE = HIGH;
+const int COUNTERCLOCKWISE = LOW;
 
 void desiredCameraPosChanged(const std_msgs::Int32& newPos);
 void driveUp(void);
@@ -55,79 +58,86 @@ void setup(){
   pinMode(ENABLE, OUTPUT);
   // HIGH on Enable = DISABLED. LOW on Enable = ENABLED.
   digitalWrite(ENABLE, HIGH); //the motor should not make loud screeching
-  nh.initNode();
-  nh.subscribe(cvDegreeReader);
-  nh.advertise(cvDegreePublisher);
-  //Serial.begin(9600);
+  if (USE_ROS) {
+    nh.initNode();
+    nh.subscribe(cvDegreeReader);
+    nh.advertise(cvDegreePublisher);
+  } else {
+    Serial.begin(9600);
+  }
 }
 
 void loop()
 {
-	nh.spinOnce();
-        //if(Serial.available())
-        //{
-        //  rotateToFaceAngle(Serial.parseInt());
-        //}
-
-	delayMicroseconds(1000);
+  if (USE_ROS) {
+    nh.spinOnce();
+  } else {
+    if(Serial.available())
+    {
+      rotateToFaceAngle(Serial.parseInt());
+    }
+  }
+  
+  delayMicroseconds(1000);
 }
 
 void rotateToFaceAngle(int angle)
 {
-    desiredDegrees = angle % 360;
-    // Step = Degrees / steps per degree * gear ratio
-    desiredStep = int(desiredDegrees/stepDegree)*19;
+  desiredDegrees = angle % 360;
+  // Step = Degrees / steps per degree * gear ratio
+  desiredStep = int(desiredDegrees/stepDegree)*19;
   if(stepCount == desiredStep)
   {
-	  return;
+    return;
   }
   else if (stepCount < desiredStep)
   {
-	  driveUp();
+    driveUp();
   }
   else
   {
-	  driveDown();
+    driveDown();
   }
 }
 
 void desiredCameraPosChanged( const std_msgs::Int32& newPos){
-    desiredDegrees = newPos.data;
-    currentCameraAngle.data = desiredDegrees;
-	rotateToFaceAngle(desiredDegrees);
-	cvDegreePublisher.publish(&currentCameraAngle);
+  desiredDegrees = newPos.data;
+  currentCameraAngle.data = desiredDegrees;
+  rotateToFaceAngle(desiredDegrees);
+  cvDegreePublisher.publish(&currentCameraAngle);
 }
 
 
-  
-  // increasing the count means we want to move clockwise (right)
-  void driveUp()
-  {
-	digitalWrite(ENABLE,LOW);
-	digitalWrite(DIRECTION_PIN, CLOCKWISE);
-	while(stepCount < desiredStep)
-	{
-		delayMicroseconds(DELAY);
-		digitalWrite(PULSE_PIN, HIGH);
-		delayMicroseconds(DELAY);
-		digitalWrite(PULSE_PIN, LOW);
-		++stepCount;
-	}
-  }
-  
-  // Decreasing the step means we want to move counter-clockwise (left).
-  void driveDown()
-  {
-	digitalWrite(ENABLE,LOW);
-	digitalWrite(DIRECTION_PIN, COUNTERCLOCKWISE);
-	while(stepCount > desiredStep)
-	{
-		delayMicroseconds(DELAY);
-		digitalWrite(PULSE_PIN, HIGH);
-		delayMicroseconds(DELAY);
-		digitalWrite(PULSE_PIN, LOW);
-		--stepCount;
-	}
-  }
 
- 
+// increasing the count means we want to move clockwise (right)
+void driveUp()
+{
+  digitalWrite(ENABLE,LOW);
+  digitalWrite(DIRECTION_PIN, CLOCKWISE);
+  while(stepCount < desiredStep)
+  {
+    delayMicroseconds(DELAY);
+    digitalWrite(PULSE_PIN, HIGH);
+    delayMicroseconds(DELAY);
+    digitalWrite(PULSE_PIN, LOW);
+    ++stepCount;
+  }
+}
+
+// Decreasing the step means we want to move counter-clockwise (left).
+void driveDown()
+{
+  digitalWrite(ENABLE,LOW);
+  digitalWrite(DIRECTION_PIN, COUNTERCLOCKWISE);
+  while(stepCount > desiredStep)
+  {
+    delayMicroseconds(DELAY);
+    digitalWrite(PULSE_PIN, HIGH);
+    delayMicroseconds(DELAY);
+    digitalWrite(PULSE_PIN, LOW);
+    --stepCount;
+  }
+}
+
+
+
