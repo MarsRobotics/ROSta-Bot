@@ -6,6 +6,7 @@
 #include <ros/ros.h>
 #include <std_msgs/String.h>
 #include </home/pi/ROSta-Bot/devel/include/position_sensoring/position.h>
+#include </home/pi/ROSta-Bot/devel/include/position_sensoring/marker_visible.h>
 
 using namespace cv;
 using namespace aruco;
@@ -13,25 +14,25 @@ using namespace position_sensoring;
 
 ////Delay before next image retrieval
 //const int WAIT_TIME = 2;
-//
+
 ////The size of the marker in meters
 //const float MARKER_SIZE = .16;
 //const float DISTANCE_CONSTANT = 7183.16666666666666;
-//
-////Path to files
-//string boardConfigFile;
-//string cameraConfigFile;
-//
-//VideoCapture videoCapture;
-//Mat inputImage,inputImageCopy;
-//BoardConfiguration boardConfig;
-//BoardDetector boardDetector;
-//CameraParameters cameraParams;
-//Mat rvec, tvec;		// for storing translation and rotation matrices
-//
+
+//Path to files
+string boardConfigFile;
+string cameraConfigFile;
+
+VideoCapture videoCapture;
+Mat inputImage,inputImageCopy;
+BoardConfiguration boardConfig;
+BoardDetector boardDetector;
+CameraParameters cameraParams;
+Mat rvec, tvec;		// for storing translation and rotation matrices
+
 //int boardHeight = 500;
 //int boardWidth = 500;
-//Vector<Marker> markers;
+Vector<Marker> markers;
 
 // Copied from ArUco library
 void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv::Point2f> &imagePoints) {
@@ -66,8 +67,8 @@ int main(int argc,char **argv) {
 	position_sensoring::position positionMsg;
 
 	// publish to the topic "marker_visible" hold 1000 of these messages in the buffer before discarding
-	ros::Publisher markerPub = n.advertise<position_sensoring::marker_version>("is_marker_visible", 1000);
-	position_sensoring::marker_version markerMsg;
+	ros::Publisher markerPub = n.advertise<position_sensoring::marker_visible>("is_marker_visible", 1000);
+	position_sensoring::marker_visible markerMsg;
 
   	
 	try {

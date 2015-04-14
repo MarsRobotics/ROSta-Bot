@@ -55,6 +55,7 @@ find_package(aruco REQUIRED)
  add_message_files(
    FILES
    position.msg
+   marker_visible.msg
  )
 
 ## Generate services in the 'srv' folder
