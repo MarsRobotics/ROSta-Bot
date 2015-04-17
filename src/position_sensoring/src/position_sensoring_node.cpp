@@ -3,10 +3,12 @@
 #include <aruco/cvdrawingutils.h>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
-#include <ros/ros.h>
-#include <std_msgs/String.h>
-#include </home/pi/ROSta-Bot/devel/include/position_sensoring/position.h>
-#include </home/pi/ROSta-Bot/devel/include/position_sensoring/marker_visible.h>
+#include "ros/ros.h"
+#include "std_msgs/String.h"
+#include "std_msgs/Int32.h"
+//TODO viki needs to be changed when using Rpi
+#include </home/viki/ROSta-Bot/devel/include/position_sensoring/position.h>
+#include </home/viki/ROSta-Bot/devel/include/position_sensoring/marker_visible.h>
 
 using namespace cv;
 using namespace aruco;
@@ -34,6 +36,9 @@ Mat rvec, tvec;		// for storing translation and rotation matrices
 //int boardWidth = 500;
 Vector<Marker> markers;
 
+int currentCameraAngle = -1;
+int targetAngle = -1;
+
 // Copied from ArUco library
 void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv::Point2f> &imagePoints) {
     //composes the matrices
@@ -52,11 +57,11 @@ void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv:
 /**
  * current_camera_angle callback
  */
-void current_camera_angle_callback(const std_msgs::StringConstPtr& message) {
-	// check if the center of the camera is past a certain threshold,
-	// then turn camera if it is
-
+void current_camera_angle_callback(const std_msgs::Int32::ConstPtr& message) {
+	// upcate current_camera_angle
+	currentCameraAngle = message->data;
 }
+
 
 int main(int argc,char **argv) {
 	ros::init(argc, argv, "position_sensor");
@@ -70,6 +75,11 @@ int main(int argc,char **argv) {
 	ros::Publisher markerPub = n.advertise<position_sensoring::marker_visible>("is_marker_visible", 1000);
 	position_sensoring::marker_visible markerMsg;
 
+	// publish new target angle to Arduino
+	ros::Publisher updateTargetAngle = n.advertise<std_msgs::Int32>("target_camera_angle", 1000);
+
+	// listen to current angle of camera (relative to motor)
+	ros::Subscriber updateCurrentCameraAngle = n.subscribe("current_camera_angle", 1, current_camera_angle_callback);
   	
 	try {
 		if (argc != 3) {
@@ -165,7 +175,14 @@ int main(int argc,char **argv) {
 
  				positionPub.publish(positionMsg);
 
-				//TODO: publish the marker vision thing here
+				// if the beacon is about to not be visible, rotate the camera
+				// starting with a small threshold first for testing purposes
+				if(positionMsg.yPose > 15 || positionMsg.yPose < -15){
+					targetAngle = currentCameraAngle + positionMsg.yPose;
+					std_msgs::Int32 theta;
+					theta.data = targetAngle;
+					updateTargetAngle.publish(theta);
+				}		
 			}
 				
 			// not sure where this really belongs...
