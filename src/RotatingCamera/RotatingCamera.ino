@@ -17,7 +17,7 @@
  PUL+ (pin 9)
  DIR+ (pin 8)
  
- ENA+ connected to ground
+ ENA+ connected to 5V
  ENA- connected to pin 10 (+5V when turning, otherwise 0V)
  
  */
@@ -38,6 +38,8 @@ double stepDegree = 0.094;
 int desiredStep = 0;
 // In testing it seems this is unecessary.
 const int DELAY = 10;
+
+const int MAX_STEP_VALUE = 72765;
 
 const int CLOCKWISE = HIGH;
 const int COUNTERCLOCKWISE = LOW;
@@ -83,6 +85,10 @@ void loop()
 
 void rotateToFaceAngle(int angle)
 {
+  while(angle < 0)
+  {
+    angle += 360;
+  }
   desiredDegrees = angle % 360;
   // Step = Degrees / steps per degree * gear ratio
   desiredStep = int(desiredDegrees/stepDegree)*19;
@@ -90,7 +96,8 @@ void rotateToFaceAngle(int angle)
   {
     return;
   }
-  else if (stepCount < desiredStep)
+  else if ((abs(desiredStep - stepCount) < int(180/stepDegree)*19 ) || 
+  ((desiredStep + MAX_STEP_VALUE - stepCount) < 180) )
   {
     driveUp();
   }
@@ -114,13 +121,13 @@ void driveUp()
 {
   digitalWrite(ENABLE,LOW);
   digitalWrite(DIRECTION_PIN, CLOCKWISE);
-  while(stepCount < desiredStep)
+  while(stepCount != desiredStep)
   {
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, HIGH);
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, LOW);
-    ++stepCount;
+    stepCount = (stepCount + 1) % MAX_STEP_VALUE;
   }
 }
 
@@ -129,13 +136,17 @@ void driveDown()
 {
   digitalWrite(ENABLE,LOW);
   digitalWrite(DIRECTION_PIN, COUNTERCLOCKWISE);
-  while(stepCount > desiredStep)
+  while(stepCount != desiredStep)
   {
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, HIGH);
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, LOW);
     --stepCount;
+    if(stepCount < 0)
+    {
+      stepCount += MAX_STEP_VALUE;
+    }
   }
 }
 
