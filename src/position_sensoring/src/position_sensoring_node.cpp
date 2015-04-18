@@ -7,8 +7,8 @@
 #include "std_msgs/String.h"
 #include "std_msgs/Int32.h"
 //TODO viki needs to be changed when using Rpi
-#include </home/viki/ROSta-Bot/devel/include/position_sensoring/position.h>
-#include </home/viki/ROSta-Bot/devel/include/position_sensoring/marker_visible.h>
+#include </home/pi/ROSta-Bot/devel/include/position_sensoring/position.h>
+#include </home/pi/ROSta-Bot/devel/include/position_sensoring/marker_visible.h>
 
 using namespace cv;
 using namespace aruco;
