@@ -140,6 +140,7 @@ void driveUp()
     digitalWrite(PULSE_PIN, LOW);
     stepCount = (stepCount + 1) % MAX_STEP_VALUE;
   }
+  digitalWrite(ENABLE, HIGH);
 }
 
 // Decreasing the step means we want to move clockwise (right).
@@ -159,6 +160,7 @@ void driveDown()
       stepCount += MAX_STEP_VALUE;
     }
   }
+  digitalWrite(ENABLE, HIGH);
 }
 
 
