@@ -26,3 +26,7 @@ class TransportDriveMotorAPI:
     # Set the intended speed of motion to zero.
     def do_not_move(self):
         self.speed_publisher.publish(0)
+
+    def simple_turn_angle(self):
+	return;
+	#TODO: add code that turns the robot
