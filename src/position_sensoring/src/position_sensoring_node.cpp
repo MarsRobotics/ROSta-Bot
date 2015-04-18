@@ -23,13 +23,13 @@ void getObjectAndImagePoints(Board &B, vector<cv::Point3f> &objPoints,vector<cv:
     int nPoints=B.size()*4;
 
     int cIdx=0;
-    for (size_t i=0;i<B.size();i++) {
-        const aruco::MarkerInfo  & mInfo=B.conf.getMarkerInfo(B[i].id);
-        for (int j=0;j<4;j++,cIdx++) {
-            imagePoints.push_back(B[i][j]);
-            objPoints.push_back(  mInfo[j]);
-        }
-    }
+    //for (size_t i=0;i<B.size();i++)
+	const aruco::MarkerInfo  & mInfo=B.conf.getMarkerInfo(B[0].id);
+	for (int j=0;j<4;j++,cIdx++) {
+		imagePoints.push_back(B[0][j]);
+		objPoints.push_back(  mInfo[j]);
+	}
+    //}
 }
 
 /**
@@ -42,8 +42,8 @@ void current_camera_angle_callback(const std_msgs::Int32::ConstPtr& message) {
 
 int main(int argc,char **argv) {
 	try {
-		if (argc != 4) {
-			cerr << "Usage: boardConfigLarge.yml boardConfigSmall.yml camera_config.yml " << endl;
+		if (argc != 3) {
+			cerr << "Usage: boardConfig.yml  camera_config.yml " << endl;
 			return -1;
 		}
 
@@ -66,18 +66,15 @@ int main(int argc,char **argv) {
 
 
 		// Variables to hold our boards,and configurations.
-		BoardConfiguration largeBoardConfig, smallBoardConfig;
-		BoardDetector largeBoardDetector, smallBoardDetector;
+		BoardConfiguration boardConfig;
+		BoardDetector boardDetector;
 		CameraParameters cameraParams;
 		
 		// Read the large board configuration file
-		largeBoardConfig.readFromFile(argv[1]);
-
-		// Read the small board configuration file
-		smallBoardConfig.readFromFile(argv[2]);
+		boardConfig.readFromFile(argv[1]);
 
 		//Get the camera configurations
-		cameraParams.readFromXMLFile(argv[3]);
+		cameraParams.readFromXMLFile(argv[2]);
 
 		VideoCapture videoCapture;
 		cv::Mat inputImage;
@@ -96,32 +93,20 @@ int main(int argc,char **argv) {
 		//read an image from camera
 		videoCapture >> inputImage;
 
-		largeBoardDetector.setParams(largeBoardConfig, cameraParams);
-		smallBoardDetector.setParams(smallBoardConfig, cameraParams);
+		boardDetector.setParams(boardConfig, cameraParams);
 
 		while (videoCapture.grab()) {
 			//retrieve an image from the camera
 			videoCapture.retrieve(inputImage);
 
-			Board board;
-
 			// Detect the images
-			if(smallBoardDetector.detect(inputImage) != -1) {
-				markers = smallBoardDetector.getDetectedMarkers();
-				board = smallBoardDetector.getDetectedBoard();
-			}
-			if(largeBoardDetector.detect(inputImage) != -1) {
-				markers = largeBoardDetector.getDetectedMarkers();
-				board = largeBoardDetector.getDetectedBoard();
-			}
+			boardDetector.detect(inputImage);
+			markers = boardDetector.getDetectedMarkers();
+			Board board  = boardDetector.getDetectedBoard();
 
 
 			// Determine pose and position based on the seen marker
 			if(markers.size() > 0) {
-				Marker m = markers[0];
-//			for (unsigned int i = 0; i < markers.size(); i++) {
-//				Marker m = markers[i];
-
 				vector <cv::Point3f> objPoints;
 				vector <cv::Point2f> imgPoints;
 
