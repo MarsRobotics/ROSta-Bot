@@ -27,6 +27,13 @@ const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ID = 2;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ID = 3;
 const unsigned char REAR_LEFT_DRIVE_MOTOR_ID = 4;
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_ID = 5;
+// Articulation motors
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ID = 6;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ID = 7;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ID = 8;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ID = 9;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ID = 10;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ID = 11;
 
 // Motor addressing (used to link the computer-constants to
 // commands sent to the saberteeth).
@@ -36,6 +43,14 @@ const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS = 130;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS = 129;
 const unsigned char REAR_LEFT_DRIVE_MOTOR_ADDRESS = 128;
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_ADDRESS = 128;
+// Articulation motor addressing
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
+
 
 // Motor addressing offset: If a motor is connected to M1, 
 // This will be 0. If the motor is connected to M2, this should
@@ -48,23 +63,43 @@ const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_COMMAND = 4;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_COMMAND = 4;
+// Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
+// a value of 1 or 5 corresponds to "clockwise".
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
 
 // shorthand that will allow us to use the motor ID as an array index to access
 // the relevant constants.
-const unsigned char DRIVE_MOTOR_ADDRESS[6] = {
+const unsigned char MOTOR_ADDRESS[12] = {
   FRONT_LEFT_DRIVE_MOTOR_ADDRESS,
   FRONT_RIGHT_DRIVE_MOTOR_ADDRESS,
   MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS,
   MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS,
   REAR_LEFT_DRIVE_MOTOR_ADDRESS,
-  REAR_RIGHT_DRIVE_MOTOR_ADDRESS};
-const unsigned char DRIVE_MOTOR_COMMAND[6] = {
+  REAR_RIGHT_DRIVE_MOTOR_ADDRESS,
+  FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS,
+  FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS,
+  MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS,
+  MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS,
+  REAR_LEFT_ARTICULATION_MOTOR_ADDRESS,
+  REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS};
+const unsigned char MOTOR_COMMAND[12] = {
   FRONT_LEFT_DRIVE_MOTOR_COMMAND,
   FRONT_RIGHT_DRIVE_MOTOR_COMMAND,
   MIDDLE_LEFT_DRIVE_MOTOR_COMMAND,
   MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND,
   REAR_LEFT_DRIVE_MOTOR_COMMAND,
-  REAR_RIGHT_DRIVE_MOTOR_COMMAND};
+  REAR_RIGHT_DRIVE_MOTOR_COMMAND,
+  FRONT_LEFT_ARTICULATION_MOTOR_COMMAND,
+  FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND,
+  MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND,
+  MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND,
+  REAR_LEFT_ARTICULATION_MOTOR_COMMAND,
+  REAR_RIGHT_ARTICULATION_MOTOR_COMMAND};
   
   
 // Track current motor status so we don't overload our serial lines
@@ -128,8 +163,8 @@ void driveAllMotors(char speed, char direction){
 void driveForwards(char speed, char motor){
   // Build the data packet:
   // Get the address and motor command ID from a predefined array.
-  unsigned char address = DRIVE_MOTOR_ADDRESS[motor];
-  unsigned char command = DRIVE_MOTOR_COMMAND[motor];
+  unsigned char address = MOTOR_ADDRESS[motor];
+  unsigned char command = MOTOR_COMMAND[motor];
   unsigned char checksum = (address + command + speed) & 0b01111111;
   // Write the packet.
   Serial3.write(address);
@@ -141,8 +176,8 @@ void driveForwards(char speed, char motor){
 // Function to drive a specific motor backwards. 
 // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
 void driveBackwards(char speed, char motor){
-  unsigned char address = DRIVE_MOTOR_ADDRESS[motor];
-  unsigned char command = DRIVE_MOTOR_COMMAND[motor] + 1;
+  unsigned char address = MOTOR_ADDRESS[motor];
+  unsigned char command = MOTOR_COMMAND[motor] + 1;
   unsigned char checksum = (address + command + speed) & 0b01111111;
   Serial3.write(address);
   Serial3.write(command);
