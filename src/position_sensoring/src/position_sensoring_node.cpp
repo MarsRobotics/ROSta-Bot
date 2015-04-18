@@ -178,7 +178,7 @@ int main(int argc,char **argv) {
 				// if the beacon is about to not be visible, rotate the camera
 				// starting with a small threshold first for testing purposes
 				if(positionMsg.yPose > 3 || positionMsg.yPose < -3){
-					if(positionmsg.yPose > 3 ){
+					if(positionMsg.yPose > 3 ){
 						targetAngle = currentCameraAngle - 3;
 					}
 					else {
