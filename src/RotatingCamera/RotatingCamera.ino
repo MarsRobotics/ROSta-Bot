@@ -25,7 +25,7 @@
 #include <std_msgs/Int32.h>
 
 
-const boolean USE_ROS = false;
+const boolean USE_ROS = true;
 
 ros::NodeHandle nh;
 const int DIRECTION_PIN = 8;
@@ -42,8 +42,8 @@ const int DELAY = 10;
 // total steps to equal 360 degrees
 const long MAX_STEP_VALUE = 72765;
 
-const int CLOCKWISE = HIGH;
-const int COUNTERCLOCKWISE = LOW;
+const int CLOCKWISE = LOW;
+const int COUNTERCLOCKWISE = HIGH;
 
 void desiredCameraPosChanged(const std_msgs::Int32& newPos);
 void driveUp(void);
@@ -102,7 +102,6 @@ void rotateToFaceAngle(int angle)
   // Step = Degrees / steps per degree * gear ratio
   desiredStep = long(desiredDegrees/stepDegree)*19;
   long tempval = desiredStep - stepCount;
-  Serial.println("recalculating");
   if(stepCount == desiredStep)
   {
     return;
@@ -128,7 +127,7 @@ void desiredCameraPosChanged( const std_msgs::Int32& newPos){
 
 
 
-// increasing the count means we want to move clockwise (right)
+// increasing the count means we want to move counterclockwise (left)
 void driveUp()
 {
   digitalWrite(ENABLE,LOW);
@@ -140,14 +139,10 @@ void driveUp()
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, LOW);
     stepCount = (stepCount + 1) % MAX_STEP_VALUE;
-    Serial.print("Step Count:");
-    Serial.print(stepCount);
-    Serial.print(" | Target Step:");
-    Serial.println(desiredStep);
   }
 }
 
-// Decreasing the step means we want to move counter-clockwise (left).
+// Decreasing the step means we want to move clockwise (right).
 void driveDown()
 {
   digitalWrite(ENABLE,LOW);
@@ -163,10 +158,6 @@ void driveDown()
     {
       stepCount += MAX_STEP_VALUE;
     }
-        Serial.print("Step Count:");
-    Serial.print(stepCount);
-    Serial.print(" | Target Step:");
-    Serial.println(desiredStep);
   }
 }
 
