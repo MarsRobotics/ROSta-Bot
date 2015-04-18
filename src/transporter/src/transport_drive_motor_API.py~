@@ -1,5 +1,5 @@
 import rospy
-from std_msgs.msg iport Char
+from std_msgs.msg import Char
 
 #This class serves as the API for the sabertooth motor controllers and the drive motors they control.
 class TransportDriveMotorAPI:
@@ -26,3 +26,7 @@ class TransportDriveMotorAPI:
     # Set the intended speed of motion to zero.
     def do_not_move(self):
         self.speed_publisher.publish(0)
+
+    def simple_turn_angle(self):
+	return;
+	#TODO

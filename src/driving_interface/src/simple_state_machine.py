@@ -35,6 +35,7 @@ class SimpleStateMachine:
         # The other two states have the robot drive backwards and forwards, respectively.
         drivingBackwards = self.woodenStateMachine.addState("driving backwards", lambda: self.robot.simple_drive_forwards)
         drivingForwards = self.woodenStateMachine.addState("driving forwards", lambda: self.robot.simple_drive_backwards)
+	turning = self.woodenStateMachine.addState("turning", lambda: self.robot.simple_turn_angle)
         # If the robot is "close enough" to the target distance, stay put.
         start.addTransition("close enough: No movement necessary", lambda: self.close_enough, start)
         # If the target is too far away, drive towards it.
