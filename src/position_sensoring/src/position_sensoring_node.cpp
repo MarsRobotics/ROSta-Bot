@@ -177,7 +177,7 @@ int main(int argc,char **argv) {
 
 				// if the beacon is about to not be visible, rotate the camera
 				// starting with a small threshold first for testing purposes
-				if(positionMsg.yPose > 15 || positionMsg.yPose < -15){
+				if(positionMsg.yPose > 3 || positionMsg.yPose < -3){
 					targetAngle = currentCameraAngle + positionMsg.yPose;
 					std_msgs::Int32 theta;
 					theta.data = targetAngle;

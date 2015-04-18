@@ -14,8 +14,8 @@ from std_msgs.msg import Char
 class animaticsMotorController:
     FORWARD_LABEL = 1
     BACKWARD_LABEL = 2
-    LEFT_TURN_LABEL = 3
-    RIGHT_TURN_LABEL = 4
+    COUNTERCLOCKWISE_LABEL = 3
+    CLOCKWISE_LABEL = -1
 
 
     SPEED_SLOW = 100000
@@ -77,7 +77,7 @@ class animaticsMotorController:
     #
     def dir_changed(self, newDirData):
         newDir = newDirData.data
-        if (0 < newDir) and (5 > newDir):
+        if (-2 < newDir) and (5 > newDir):
             self.currentDir = newDir
             if newDir != self.lastDirUpdate:
                 self.lastDirUpdate = newDir
@@ -105,10 +105,10 @@ class animaticsMotorController:
             elif self.currentDir == self.BACKWARD_LABEL:
                 self.driveLeft(0-self.currentSpeed)
                 self.driveRight(0-self.currentSpeed)
-            elif self.currentDir == self.LEFT_TURN_LABEL:
+            elif self.currentDir == self.COUNTERCLOCKWISE_LABEL:
                 self.driveLeft(0-self.currentSpeed)
                 self.driveRight(self.currentSpeed)
-            elif self.currentDir == self.RIGHT_TURN_LABEL:
+            elif self.currentDir == self.CLOCKWISE_LABEL:
                 self.driveLeft(self.currentSpeed)
                 self.driveRight(0-self.currentSpeed)
             # If we get a malformed drive command, stop the vehicle.

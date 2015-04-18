@@ -6,6 +6,9 @@ class TransportDriveMotorAPI:
     FORWARD_LABEL = 1
     BACKWARD_LABEL = 2
 
+    CLOCKWISE_LABEL = -1
+    COUNTERCLOCKWISE_LABEL = 3
+
     def __init__(self):
         # Initialize publishers for speed and direction topics.
         self.speed_publisher = rospy.Publisher("drive_speed", Char, queue_size=5)
@@ -27,6 +30,6 @@ class TransportDriveMotorAPI:
     def do_not_move(self):
         self.speed_publisher.publish(0)
 
-    def simple_turn_angle(self):
-	return;
-	#TODO: add code that turns the robot
+    def simple_turn_direction(self, direction):
+        if direction == self.COUNTERCLOCKWISE_LABEL or direction == self.CLOCKWISE_LABEL:
+            self.dir_publisher.publish(direction)
