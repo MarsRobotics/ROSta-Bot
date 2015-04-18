@@ -25,21 +25,22 @@
 #include <std_msgs/Int32.h>
 
 
-const boolean USE_ROS = true;
+const boolean USE_ROS = false;
 
 ros::NodeHandle nh;
 const int DIRECTION_PIN = 8;
 const int PULSE_PIN = 9;
 const int ENABLE = 10;
-int stepCount = 0;
-int desiredDegrees = 0;
-int beaconDegreeOffset = 0;
+long stepCount = 0;
+long desiredDegrees = 0;
+long beaconDegreeOffset = 0;
 double stepDegree = 0.094;
-int desiredStep = 0;
+long desiredStep = 0;
 // In testing it seems this is unecessary.
 const int DELAY = 10;
 
-const int MAX_STEP_VALUE = 72765;
+// total steps to equal 360 degrees
+const long MAX_STEP_VALUE = 72765;
 
 const int CLOCKWISE = HIGH;
 const int COUNTERCLOCKWISE = LOW;
@@ -53,6 +54,7 @@ ros::Subscriber<std_msgs::Int32> cvDegreeReader("target_camera_angle", &desiredC
 std_msgs::Int32 currentCameraAngle;
 ros::Publisher cvDegreePublisher("current_camera_angle", &currentCameraAngle);
 
+
 void setup(){
 
   pinMode(DIRECTION_PIN, OUTPUT);
@@ -65,18 +67,22 @@ void setup(){
     nh.subscribe(cvDegreeReader);
     nh.advertise(cvDegreePublisher);
   } else {
-    Serial.begin(9600);
+    Serial.begin(57600);
   }
 }
 
 void loop()
 {
+  int temp = 0;
   if (USE_ROS) {
     nh.spinOnce();
   } else {
     if(Serial.available())
     {
-      rotateToFaceAngle(Serial.parseInt());
+      int temp = Serial.parseInt();
+      Serial.print("Read off the console: ");
+      Serial.println(temp);
+      rotateToFaceAngle(temp);
     }
   }
   
@@ -87,17 +93,23 @@ void rotateToFaceAngle(int angle)
 {
   while(angle < 0)
   {
+    // make positive
     angle += 360;
   }
+  // make within range 0 - 360
   desiredDegrees = angle % 360;
+  
   // Step = Degrees / steps per degree * gear ratio
-  desiredStep = int(desiredDegrees/stepDegree)*19;
+  desiredStep = long(desiredDegrees/stepDegree)*19;
+  long tempval = desiredStep - stepCount;
+  Serial.println("recalculating");
   if(stepCount == desiredStep)
   {
     return;
   }
-  else if ((abs(desiredStep - stepCount) < int(180/stepDegree)*19 ) || 
-  ((desiredStep + MAX_STEP_VALUE - stepCount) < 180) )
+  // move intelligently...
+  else if (((tempval > 0) && ((tempval) < (long(180/stepDegree*19))) ) || 
+  ((desiredStep + MAX_STEP_VALUE - stepCount) < (long(180/stepDegree*19))) )
   {
     driveUp();
   }
@@ -120,7 +132,7 @@ void desiredCameraPosChanged( const std_msgs::Int32& newPos){
 void driveUp()
 {
   digitalWrite(ENABLE,LOW);
-  digitalWrite(DIRECTION_PIN, CLOCKWISE);
+  digitalWrite(DIRECTION_PIN, COUNTERCLOCKWISE);
   while(stepCount != desiredStep)
   {
     delayMicroseconds(DELAY);
@@ -128,6 +140,10 @@ void driveUp()
     delayMicroseconds(DELAY);
     digitalWrite(PULSE_PIN, LOW);
     stepCount = (stepCount + 1) % MAX_STEP_VALUE;
+    Serial.print("Step Count:");
+    Serial.print(stepCount);
+    Serial.print(" | Target Step:");
+    Serial.println(desiredStep);
   }
 }
 
@@ -135,7 +151,7 @@ void driveUp()
 void driveDown()
 {
   digitalWrite(ENABLE,LOW);
-  digitalWrite(DIRECTION_PIN, COUNTERCLOCKWISE);
+  digitalWrite(DIRECTION_PIN, CLOCKWISE);
   while(stepCount != desiredStep)
   {
     delayMicroseconds(DELAY);
@@ -147,6 +163,10 @@ void driveDown()
     {
       stepCount += MAX_STEP_VALUE;
     }
+        Serial.print("Step Count:");
+    Serial.print(stepCount);
+    Serial.print(" | Target Step:");
+    Serial.println(desiredStep);
   }
 }
 
