@@ -45,7 +45,7 @@ const unsigned char REAR_LEFT_DRIVE_MOTOR_ADDRESS = 128;
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_ADDRESS = 132;
 // Articulation motor addressing
 const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS = 130;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 128;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 133;
 const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS = 129;
 const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS = 134;
 const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ADDRESS = 128;
