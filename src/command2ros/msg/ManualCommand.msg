@@ -1,0 +1,17 @@
+float32 fl_articulation_angle
+float32 fr_articulation_angle
+float32 ml_articulation_angle
+float32 mr_articulation_angle
+float32 rl_articulation_angle
+float32 rr_articulation_angle
+
+float32 fl_drive_speed
+float32 fr_drive_speed
+float32 ml_drive_speed
+float32 mr_drive_speed
+float32 rl_drive_speed
+float32 rr_drive_speed
+
+float32 drive_duration
+
+bool e_stop
