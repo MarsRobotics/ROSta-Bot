@@ -37,40 +37,40 @@ const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ID = 11;
 
 // Motor addressing (used to link the computer-constants to
 // commands sent to the saberteeth).
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_ADDRESS = 129;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 130;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS = 130;
-const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS = 129;
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_ADDRESS = 130;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 133;
+const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS = 129;
+const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS = 134;
 const unsigned char REAR_LEFT_DRIVE_MOTOR_ADDRESS = 128;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_ADDRESS = 128;
+const unsigned char REAR_RIGHT_DRIVE_MOTOR_ADDRESS = 132;
 // Articulation motor addressing
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
-const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ADDRESS = 000;
-const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS = 000;
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS = 130;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 128;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS = 129;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS = 134;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ADDRESS = 128;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS = 132;
 
 
 // Motor addressing offset: If a motor is connected to M1, 
 // This will be 0. If the motor is connected to M2, this should
 // be 4.
-// A value of 0 or 4 corresponds to 'forwards'. A value of 1 or 5
-// corresponds to 'backwards'.
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 4;
+// A value of 0 or 4 corresponds to 'clockwise'. A value of 1 or 5
+// corresponds to 'counterclockwise'.
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_COMMAND = 4;
+const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_COMMAND = 4;
+const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 4;
+const unsigned char REAR_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 // Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
 // a value of 1 or 5 corresponds to "clockwise".
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
 const unsigned char REAR_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
-const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
 
 // shorthand that will allow us to use the motor ID as an array index to access
 // the relevant constants.
