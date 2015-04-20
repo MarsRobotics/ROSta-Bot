@@ -36,62 +36,51 @@ class GUI(QtGui.QWidget):
         chilla.move(10, 220)
 
         #puppies pic
-        pixmap = QtGui.QPixmap("puppies.JPG").scaledToHeight(130).scaledToWidth(140)
+        pixmap = QtGui.QPixmap("puppies.JPG").scaledToHeight(160).scaledToWidth(140)
         pup = QtGui.QLabel(self)
         pup.setPixmap(pixmap)
-        pup.move(180, 220)
-
-        """table = QtGui.QTableWidget(self)
-        headers = []
-        for row in range(0, 3):
-            headers.append("header")
-            for col in range(0, 3):
-                table.setItem(row, col, QtGui.QTableWidgetItem("hello"))
-        table.setHorizontalHeaderLabels(headers)
-        table.show()
-        table.move(30, 50)
-        table.setStyle(QtGui.QStyle())"""
+        pup.move(160, 220)
 
         #kill button
         btn = QtGui.QPushButton('KILL', self)
         btn.setToolTip('<b>Kill Power</b>')
         #resize button with recommended size
         btn.resize(btn.sizeHint())
-        btn.move(w-150, h-60)
+        btn.move(w-150, h-40)
 
         #forward button
         btnFor = QtGui.QPushButton('Forward', self)
         btnFor.setToolTip('<b>Move forward</b>')
         #resize button with recommended size
         btnFor.resize(btn.sizeHint())
-        btnFor.move(w-150, h-190)
+        btnFor.move(w-150, h-170)
 
         #backward button
         btnBack = QtGui.QPushButton('Backward', self)
         btnBack.setToolTip('<b>Move backward</b>')
         #resize button with recommended size
         btnBack.resize(btn.sizeHint())
-        btnBack.move(w-150, h-120)
+        btnBack.move(w-150, h-100)
 
         #right turn button
         btnRgt = QtGui.QPushButton('Right', self)
         btnRgt.setToolTip('<b>Move right</b>')
         #resize button with recommended size
         btnRgt.resize(btn.sizeHint())
-        btnRgt.move(w-100, h-155)
+        btnRgt.move(w-100, h-135)
 
         #left turn button
         btnLft = QtGui.QPushButton('Left', self)
         btnLft.setToolTip('<b>Move left</b>')
         #resize button with recommended size
         btnLft.resize(btn.sizeHint())
-        btnLft.move(w-200, h-155)
+        btnLft.move(w-200, h-135)
 
         #Textbox
         lblMsg = QtGui.QLabel('Message', self)
-        lblMsg.move(w-300, h-80)
+        lblMsg.move(w-350, h-80)
         msg = QtGui.QLineEdit(self)
-        msg.move(w-300, h-50)
+        msg.move(w-350, h-50)
 
         #ROS topic
         lblROStop = QtGui.QLabel('ROS Topic', self)
@@ -107,10 +96,22 @@ class GUI(QtGui.QWidget):
         #Numeric Data
         lblNum = QtGui.QLabel('Numeric Data', self)
         lblNum.move(w-200, 150)
+        nums = QtGui.QTableWidget(self)
+        QtGui.QTableWidget.setColumnCount(nums, 3)
+        QtGui.QTableWidget.setRowCount(nums, 2)
+        QtGui.QTableWidget.move(nums, w-250, 170)
+        QtGui.QTableWidget.setMaximumHeight(nums, 100)
 
         #Sensor Data
         lblSenData = QtGui.QLabel('Sensor Data', self)
-        lblSenData.move(w-200, 20)
+        lblSenData.move(w-200, 10)
+
+        #sensor table
+        sensor = QtGui.QTableWidget(self)
+        QtGui.QTableWidget.setColumnCount(sensor, 3)
+        QtGui.QTableWidget.setRowCount(sensor, 2)
+        QtGui.QTableWidget.move(sensor, w-250, 30)
+        QtGui.QTableWidget.setMaximumHeight(sensor, 100)
 
         #locates window on screen and sets size
         self.setGeometry(300, 300, w, h)
