@@ -12,155 +12,132 @@
  / communications.
  */
 #include <ros.h>
-#include <std_msgs/String.h>
-#include <std_msgs/Char.h>
-
-// CONSTANTS 
-// We'll track which direction we're currently moving in this demo
-// So we don't have to write more packets than we have to.
-const char FORWARD_LABEL = 1;
-const char BACKWARD_LABEL = 2;
-// Motor constants (used to communicate with the onboard computer).
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_ID = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ID = 1;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ID = 2;
-const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ID = 3;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_ID = 4;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_ID = 5;
-// Articulation motors
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ID = 6;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ID = 7;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ID = 8;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ID = 9;
-const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ID = 10;
-const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ID = 11;
-
-// Motor addressing (used to link the computer-constants to
-// commands sent to the saberteeth).
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_ADDRESS = 130;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 133;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS = 129;
-const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS = 134;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_ADDRESS = 128;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_ADDRESS = 132;
-// Articulation motor addressing
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS = 130;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS = 133;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS = 129;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS = 134;
-const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ADDRESS = 128;
-const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS = 132;
+#include <std_msgs/Bool.h>
+#include <std_msgs/Float32.h>
+#include <command2ros/ManualCommand.h>
+#include <SabertoothDriverROS.h>
 
 
-// Motor addressing offset: If a motor is connected to M1, 
-// This will be 0. If the motor is connected to M2, this should
-// be 4.
-// A value of 0 or 4 corresponds to 'clockwise'. A value of 1 or 5
-// corresponds to 'counterclockwise'.
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 4;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-// Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
-// a value of 1 or 5 corresponds to "clockwise".
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
-const unsigned char REAR_LEFT_ARTICULATION_MOTOR_COMMAND = 0;
-const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
-
-// shorthand that will allow us to use the motor ID as an array index to access
-// the relevant constants.
-const unsigned char MOTOR_ADDRESS[12] = {
-  FRONT_LEFT_DRIVE_MOTOR_ADDRESS,
-  FRONT_RIGHT_DRIVE_MOTOR_ADDRESS,
-  MIDDLE_LEFT_DRIVE_MOTOR_ADDRESS,
-  MIDDLE_RIGHT_DRIVE_MOTOR_ADDRESS,
-  REAR_LEFT_DRIVE_MOTOR_ADDRESS,
-  REAR_RIGHT_DRIVE_MOTOR_ADDRESS,
-  FRONT_LEFT_ARTICULATION_MOTOR_ADDRESS,
-  FRONT_RIGHT_ARTICULATION_MOTOR_ADDRESS,
-  MIDDLE_LEFT_ARTICULATION_MOTOR_ADDRESS,
-  MIDDLE_RIGHT_ARTICULATION_MOTOR_ADDRESS,
-  REAR_LEFT_ARTICULATION_MOTOR_ADDRESS,
-  REAR_RIGHT_ARTICULATION_MOTOR_ADDRESS};
-const unsigned char MOTOR_COMMAND[12] = {
-  FRONT_LEFT_DRIVE_MOTOR_COMMAND,
-  FRONT_RIGHT_DRIVE_MOTOR_COMMAND,
-  MIDDLE_LEFT_DRIVE_MOTOR_COMMAND,
-  MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND,
-  REAR_LEFT_DRIVE_MOTOR_COMMAND,
-  REAR_RIGHT_DRIVE_MOTOR_COMMAND,
-  FRONT_LEFT_ARTICULATION_MOTOR_COMMAND,
-  FRONT_RIGHT_ARTICULATION_MOTOR_COMMAND,
-  MIDDLE_LEFT_ARTICULATION_MOTOR_COMMAND,
-  MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND,
-  REAR_LEFT_ARTICULATION_MOTOR_COMMAND,
-  REAR_RIGHT_ARTICULATION_MOTOR_COMMAND};
-  
-  
 // Track current motor status so we don't overload our serial lines
  
  // Do we have a new command, or is it business as usual?
  // By default, we have no new commands.
-unsigned char new_commands = 0;
-// By default, the robot will intend to drive forwards.
-char current_direction = FORWARD_LABEL;
+ 
+// Have we done a software E-stop?
+// By default, we have (this way the robot won't move until we get 
+// valid control input)
+bool emergencyStop = true;
+
+// Is the robot currently rotating?
+// If true, we should override motor drive velocity with rotation velocity.
+bool currentlyRotating = false;
+// How long should we drive for (milliseconds)?
+int driveTime = 0;
 // By default, the velocity is zero.
 char current_velocity = 0;
+Wheel_status[6] targetWheelStatus;
+Wheel_status[6] currentWheelStatus;
+
+void newManualCommandCallback(const command2ros::ManualCommand& nmc)
+{
+ // TODO: Update wheel status info. Determine if we need to rotate.
+ currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
+ driveTime = (int)(nmc.drive_duration * 1000);
+ emergencyStop = nmc.emergencyStop;
+}
 
 
-// Callback to handle ROS changing the intended direction of the robot.
-void newDirectionCallback(const std_msgs::Char& newDir){
-  // If the direction is different, 
-  if (newDir.data != FORWARD_LABEL)
+// Function to update wheel status variables. 
+// Returns TRUE if an orientation changed, FALSE otherwise.
+bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc)
+{
+  bool retval = false;
+  // Check wheel orientations:
+  // Check if the front-left wheel orientation should be changed.
+  if(targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.fl_articulation_angle)
   {
-    // Only accept valid directions (forwards or backwards)
-    if((newDir.data == FORWARD_LABEL) || (newDir.data == BACKWARD_LABEL))
+    retval = true;
+    targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.fl_articulation_angle;
+  }
+  
+  // Check if the middle-left wheel orientation should be changed.
+  if(targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.ml_articulation_angle)
+  {
+    retval = true;
+    targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.ml_articulation_angle;
+  }
+  
+  // Check if the rear-left wheel orientation should be changed.
+  if(targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.rl_articulation_angle)
+  {
+    retval = true;
+    targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.rl_articulation_angle;
+  }
+  
+  // Check if the front-right wheel orientation should be changed.
+  if(targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.fr_articulation_angle)
+  {
+    retval = true;
+    targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.fr_articulation_angle;
+  }
+  
+  // Check if the middle-right wheel orientation should be changed.
+  if(targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.mr_articulation_angle)
+  {
+    retval = true;
+    targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.mr_articulation_angle;
+  }
+  
+  // Check if the rear-right wheel orientation should change.
+  if(targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.rr_articulation_angle)
+  {
+    retval = true;
+    targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.rr_articulation_angle;
+  }
+  
+  // Update target drive speeds.
+  targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.fl_drive_speed;
+  targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.fr_drive_speed;
+  targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.ml_drive_speed;
+  targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.mr_drive_speed;
+  targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.rl_drive_speed;
+  targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.rr_drive_speed;
+  return retval;
+    
+}
+
+
+
+// Function to drive the motors as specified in the ROS packet.
+// HANDY VALUES:
+// speed: unsigned char representing the velocity (0-127).
+void continueDriving(){
+  // Short-circuit on EStop!
+  if(emergencyStop)
+  {
+    // send stop-driving commands to all motors
+    for(int i = 0; i < 12; ++i)
     {
-      new_commands += 1; 
-      current_direction = newDir.data;
+      driveClockwise(0,i);
     }
+    // short-circuit
+    return;
+  }
+  
+  if(currentlyRotating)
+  {
+    // TODO:Rotate 
+  }
+  else
+  {
+    // TODO: Drive
   }
   
 }
 
-// Function to process new motor speeds.
-void newMotorSpeedCallback(const std_msgs::Char& newSpeed){
-  // If the data is new and valid (within the 0-127 range)
-  if ((newSpeed.data != current_velocity) && (newSpeed.data > 0))
-  {
-    new_commands += 1;
-    current_velocity = newSpeed.data;
-  }
-}
-
-// Function to drive all the motors forwards or backwards 
-//   at the same specific velocity. 
-// PARAMETERS:
-// speed: unsigned char representing the velocity (0-127).
-// direction: the constant char (FOWARDS_LABEL or BACKWARDS_LABEL) 
-//   indicating which way we want the wheels to spin. 
-void driveAllMotors(char speed, char direction){
- char i = 0;
- if (FORWARD_LABEL == direction) {
-   for (i = 0; 6 > i; ++i) {
-    driveForwards(speed, i);
-   }
- }
- else if (BACKWARD_LABEL == direction){
-   for (i = 0; 6 > i; ++i) {
-    driveBackwards(speed, i);
-   }   
- }
-}
-
 // Function to drive a specific motor forward. 
 // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
-void driveForwards(char speed, char motor){
+void driveClockwise(char speed, char motor){
   // Build the data packet:
   // Get the address and motor command ID from a predefined array.
   unsigned char address = MOTOR_ADDRESS[motor];
@@ -175,7 +152,7 @@ void driveForwards(char speed, char motor){
 
 // Function to drive a specific motor backwards. 
 // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
-void driveBackwards(char speed, char motor){
+void driveCounterclockwise(char speed, char motor){
   unsigned char address = MOTOR_ADDRESS[motor];
   unsigned char command = MOTOR_COMMAND[motor] + 1;
   unsigned char checksum = (address + command + speed) & 0b01111111;
@@ -188,14 +165,13 @@ void driveBackwards(char speed, char motor){
 // This node handle represents this arduino. 
 ros::NodeHandle sabertoothDriverNode;
 // Subscribers for intended drive velocity and direction
-ros::Subscriber<std_msgs::Char> directionSUB("drive_direction", newDirectionCallback );
-ros::Subscriber<std_msgs::Char> speedSUB("drive_speed", newMotorSpeedCallback);
+ros::Subscriber<command2ros::ManualCommand> mcSUB("???", newManualCommandCallback );
+
 
 void setup(){
   // Communicate with the computer
   sabertoothDriverNode.initNode();
-  sabertoothDriverNode.subscribe(speedSUB);
-  sabertoothDriverNode.subscribe(directionSUB);
+  sabertoothDriverNode.subscribe(mcSUB);
   // Communicate with the Sabertooth
   Serial3.begin(9600);
 }
@@ -204,10 +180,8 @@ void setup(){
 // So far, it drives the robot forwards and backwards.
 void loop(){
   sabertoothDriverNode.spinOnce();
-  if (new_commands) {
-     new_commands = 0;
-     driveAllMotors(current_velocity, current_direction);
-  }
+  continueDriving();
+  // TODO: Delete this?
   delayMicroseconds(100000);
 
 }
