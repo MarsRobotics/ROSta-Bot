@@ -69,15 +69,15 @@ class robotDataServer(threading.Thread):
 
     def run(self):
         try:
-            nextTime = time.time()
+            sendTime = 0
             while True:
 
                 self.socket.setblocking(1)
-                if nextTime < time.time():
+                if sendTime < time.time():
                 # Send the robot data to the client
                     sendData(self.socket, self.distributor.data)
                     sendTime = time.time() + 1/float(sendRate)
-
+                    print sendTime
                 # An extra exception because we have a non-blocking socket
                 try:
                     self.socket.setblocking(0)
