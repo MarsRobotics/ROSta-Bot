@@ -3,24 +3,18 @@
  / "Packetized Serial" method of using the Sabertooth Motor
  / Controller. 
  /
- / SETUP: Be sure that the Sabertooth has DIPs 4,5,6 on (1,2 off).
- /  DIP 3 is used to indicate Lithium battery mode, and will vary
- /  in its position based on the power source.
+ / SETUP:
+ /  If ON is "up", then DIPs 1-3 should be DOWN. DIPs 4-6 are address DIPs,
+ / and will vary by ther sabertooth.
  / Sabertooth[s] should be connected on S1 to TX3 on an Arduino Mega 2560.
  / This allows it to read 9600-baud commands from the Arduino Mega.
- / Be careful to use TX3: TX1 should be reserved for Arduino-Computer
+ / Be careful to use TX3: TX0 should be reserved for Arduino-Computer
  / communications.
  */
 #include <ros.h>
 #include <command2ros/ManualCommand.h>
 #include <SabertoothDriverROS.h>
 
-
-// Track current motor status so we don't overload our serial lines
- 
- // Do we have a new command, or is it business as usual?
- // By default, we have no new commands.
- 
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
 // valid control input)
@@ -146,7 +140,7 @@ void continueDriving(){
 // A function that tells all motors to stop moving.
 void stopAllMotors()
 {
-      // send stop-driving commands to all motors
+    // send stop-driving commands to all motors
     for(int i = 0; i < 12; ++i)
     {
       driveClockwise(0,i);
