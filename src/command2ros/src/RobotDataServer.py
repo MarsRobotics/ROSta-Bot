@@ -16,10 +16,10 @@ from command2ros.msg import ManualCommand
 import roslib
 roslib.load_manifest('command2ros')
 
-from std_msgs.msg import String
+import time
 
-
-
+# In Hertz
+sendRate = 10
 
 ##
 # robotDataDistributor
@@ -69,14 +69,14 @@ class robotDataServer(threading.Thread):
 
     def run(self):
         try:
-            sendCount = 0
+            nextTime = time.time()
             while True:
 
                 self.socket.setblocking(1)
-                if sendCount > 100:
+                if nextTime < time.time():
                 # Send the robot data to the client
                     sendData(self.socket, self.distributor.data)
-                    ++sendCount
+                    sendTime = time.time() + 1/float(sendRate)
 
                 # An extra exception because we have a non-blocking socket
                 try:
