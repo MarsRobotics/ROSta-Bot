@@ -12,8 +12,6 @@
  / communications.
  */
 #include <ros.h>
-#include <std_msgs/Bool.h>
-#include <std_msgs/Float32.h>
 #include <command2ros/ManualCommand.h>
 #include <SabertoothDriverROS.h>
 
@@ -31,8 +29,14 @@ bool emergencyStop = true;
 // Is the robot currently rotating?
 // If true, we should override motor drive velocity with rotation velocity.
 bool currentlyRotating = false;
+
 // How long should we drive for (milliseconds)?
-int driveTime = 0;
+unsigned long driveTimeMillis = 0;
+//DriveUntil: Used when driving forwards.
+// Should be of the form millis() + driveTimeMillis
+unsigned long driveUntilTime = 0;
+
+
 // By default, the velocity is zero.
 char current_velocity = 0;
 Wheel_status[6] targetWheelStatus;
@@ -42,7 +46,7 @@ void newManualCommandCallback(const command2ros::ManualCommand& nmc)
 {
  // TODO: Update wheel status info. Determine if we need to rotate.
  currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
- driveTime = (int)(nmc.drive_duration * 1000);
+ driveTimeMillis = (long)(nmc.drive_duration * 1000);
  emergencyStop = nmc.emergencyStop;
 }
 
@@ -115,11 +119,7 @@ void continueDriving(){
   // Short-circuit on EStop!
   if(emergencyStop)
   {
-    // send stop-driving commands to all motors
-    for(int i = 0; i < 12; ++i)
-    {
-      driveClockwise(0,i);
-    }
+    stopAllMotors();
     // short-circuit
     return;
   }
@@ -130,9 +130,27 @@ void continueDriving(){
   }
   else
   {
+    // If we still intend to drive, do so.
+    if(millis() < driveUntilTime)
+    {
     // TODO: Drive
+    }
+    else
+    {
+      stopAllMotors();
+    }
   }
   
+}
+
+// A function that tells all motors to stop moving.
+void stopAllMotors()
+{
+      // send stop-driving commands to all motors
+    for(int i = 0; i < 12; ++i)
+    {
+      driveClockwise(0,i);
+    }
 }
 
 // Function to drive a specific motor forward. 
@@ -182,6 +200,6 @@ void loop(){
   sabertoothDriverNode.spinOnce();
   continueDriving();
   // TODO: Delete this?
-  delayMicroseconds(100000);
+  delayMicroseconds(1000);
 
 }

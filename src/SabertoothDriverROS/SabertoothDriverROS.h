@@ -105,5 +105,6 @@ bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc);
 void continueDriving();
 void driveClockwise(char speed, char motor);
 void driveCounterclockwise(char speed, char motor);
+void stopAllMotors();
 
 
