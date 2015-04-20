@@ -69,14 +69,14 @@ class robotDataServer(threading.Thread):
 
     def run(self):
         try:
-
+            sendCount = 0
             while True:
 
                 self.socket.setblocking(1)
-
+                if sendCount > 100:
                 # Send the robot data to the client
-                sendData(self.socket, self.distributor.data)
-
+                    sendData(self.socket, self.distributor.data)
+                    ++sendCount
 
                 # An extra exception because we have a non-blocking socket
                 try:
@@ -123,7 +123,6 @@ while True:
     # Process a command
     if len(commandQueue) > 0:
         command = commandQueue.pop(0)
-
 	print "processing command"
 
         mc = ManualCommand()
