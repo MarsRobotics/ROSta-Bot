@@ -10,7 +10,6 @@ from DataTransferProtocol import receiveData, sendData
 from RobotData import ManualControlData
 import rospy
 
-# from src.
 import sys
 sys.path.append("/home/pi/ROSta-Bot/src/command2ros/src")
 from command2ros.msg import ManualCommand
