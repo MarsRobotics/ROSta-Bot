@@ -6,6 +6,8 @@ try:
 except ImportError:
     import pickle
 
+from socket import error as socket_error
+
 # How big of a string should we use to send the data body size
 BODY_SIZE_STRING_SIZE = 10
 
@@ -49,7 +51,10 @@ def sendData(socket, data):
 def receiveData(socket):
 
     # first we get a string that says how long the serialized string is
-    length = int(socket.recv(BODY_SIZE_STRING_SIZE))
+    length = socket.recv(BODY_SIZE_STRING_SIZE)
+    if length == '':
+	raise socket_error("")
+    length = int(length)
 
     # If we have received the first part of the data, then we need to get all of it
     # So we will wait for it to all come in

@@ -10,17 +10,16 @@ from DataTransferProtocol import receiveData, sendData
 from RobotData import ManualControlData
 import rospy
 
-# from src.
 import sys
 sys.path.append("/home/pi/ROSta-Bot/src/command2ros/src")
 from command2ros.msg import ManualCommand
 import roslib
 roslib.load_manifest('command2ros')
 
-from std_msgs.msg import String
+import time
 
-
-
+# In Hertz
+sendRate = 10
 
 ##
 # robotDataDistributor
@@ -37,7 +36,7 @@ class robotDataDistributor(threading.Thread):
     def run(self):
         # configure the socket to receive incoming sockets
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        server_address = ('localhost', 10000)
+        server_address = ('192.168.1.137', 10000)
         s.bind(server_address)
         s.listen(1)
 
@@ -70,14 +69,15 @@ class robotDataServer(threading.Thread):
 
     def run(self):
         try:
-
+            sendTime = 0
             while True:
 
                 self.socket.setblocking(1)
-
+                if sendTime < time.time():
                 # Send the robot data to the client
-                sendData(self.socket, self.distributor.data)
-
+                    sendData(self.socket, self.distributor.data)
+                    sendTime = time.time() + 1/float(sendRate)
+                    print sendTime
                 # An extra exception because we have a non-blocking socket
                 try:
                     self.socket.setblocking(0)
@@ -88,6 +88,8 @@ class robotDataServer(threading.Thread):
                         commandQueue.insert(0, newCommand)
                     else:
                         commandQueue.append(newCommand)
+
+                    print "received command"
 
                     # print manualControlCommand.go_forward
 
@@ -121,6 +123,7 @@ while True:
     # Process a command
     if len(commandQueue) > 0:
         command = commandQueue.pop(0)
+	print "processing command"
 
         mc = ManualCommand()
         mc.fl_articulation_angle = command.fl_articulation_angle
@@ -144,7 +147,6 @@ while True:
         pub.publish(mc)
 
         # TODO: stuff with the command
-        print command.go_forward
 
     # Update Robot data
 
