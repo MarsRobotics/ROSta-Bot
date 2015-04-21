@@ -106,5 +106,6 @@ void continueDriving();
 void driveClockwise(char speed, char motor);
 void driveCounterclockwise(char speed, char motor);
 void stopAllMotors();
+void articulate();
 
 

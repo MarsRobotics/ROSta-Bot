@@ -121,6 +121,7 @@ void continueDriving(){
   if(currentlyRotating)
   {
     // TODO:Rotate 
+    articulate();
   }
   else
   {
@@ -134,6 +135,34 @@ void continueDriving(){
       stopAllMotors();
     }
   }
+  
+}
+
+// A function to articulate the wheels to face the desired orientation.
+void articulate()
+{
+  // For now, only articulate the FRONT LEFT wheel.
+  int delta = 0;
+  
+  // Which direction should we rotate?
+  delta  = targetWheelStatus.fl_articulation_angle - currentWheelStatus.fl_articulation_angle;
+  if(0==delta)
+  {
+    // TODO: update this when we have multi-wheel support
+    rotating = false;
+  }
+  else if (((delta > 0) && (delta < 180)) || 
+  ((delta + 360) < 180 ))
+  {
+    driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR);
+    driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR);
+  }
+  else
+  {
+    driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR);
+    driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR);
+  }
+  
   
 }
 
@@ -186,6 +215,20 @@ void setup(){
   sabertoothDriverNode.subscribe(mcSUB);
   // Communicate with the Sabertooth
   Serial3.begin(9600);
+  
+  // Initialize current wheel status: Assume we're in "closed" position
+  currentWheelStatus.fl_articulation_angle = 0.0;
+  currentWheelStatus.fr_articulation_angle = 180.0;
+  currentWheelStatus.ml_articulation_angle = 0.0;
+  currentWheelStatus.mr_articulation_angle = 180.0;
+  currentWheelStatus.rl_articulation_angle = 0.0;
+  currentWheelStatus.rr_articulation_angle = 180.0;
+  currentWheelStatus.fl_drive_speed = 0.0;
+  currentWheelStatus.fr_drive_speed = 0.0;
+  currentWheelStatus.ml_drive_speed = 0.0;
+  currentWheelStatus.mr_drive_speed = 0.0;
+  currentWheelStatus.rl_drive_speed = 0.0;
+  currentWheelStatus.rr_drive_speed = 0.0;
 }
 
 // This program does whatever ROS directs it to do.
