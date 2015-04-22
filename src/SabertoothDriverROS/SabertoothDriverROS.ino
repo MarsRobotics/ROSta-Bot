@@ -12,9 +12,12 @@
  / communications.
  */
 #include <ros.h>
-#include <Encoder.h>
+#include <EncoderLibrary/Encoder.h>
 #include <command2ros/ManualCommand.h>
 #include "SabertoothDriverROS.h"
+
+
+Encoder::Encoder e;
 
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
@@ -42,7 +45,7 @@ void newManualCommandCallback(const command2ros::ManualCommand& nmc)
  // TODO: Update wheel status info. Determine if we need to rotate.
  currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
  driveTimeMillis = (long)(nmc.drive_duration * 1000);
- emergencyStop = nmc.emergencyStop;
+ emergencyStop = nmc.e_stop;
 }
 
 
@@ -153,7 +156,7 @@ void articulate()
     driveCounterclockwise(0, FRONT_LEFT_ARTICULATION_MOTOR_ID);
     driveCounterclockwise(0, FRONT_LEFT_DRIVE_MOTOR_ID);
     // TODO: update this when we have multi-wheel support
-    rotating = false;
+    currentlyRotating = false;
     driveUntilTime = millis() + driveTimeMillis;
   }
   else if (((delta > 0) && (delta < 180)) || 
@@ -226,7 +229,7 @@ ros::Subscriber<command2ros::ManualCommand> mcSUB("???", &newManualCommandCallba
 
 void updateArticulationValues()
 {
- currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (Encoder.getPosition() * 9) / 10;
+ currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (Encoder::getPosition() * 9) / 10;
 }
 
 void setup(){
@@ -237,18 +240,18 @@ void setup(){
   Serial3.begin(9600);
   
   // Initialize current wheel status: Assume we're in "closed" position
-  currentWheelStatus.fl_articulation_angle = 0.0;
-  currentWheelStatus.fr_articulation_angle = 180.0;
-  currentWheelStatus.ml_articulation_angle = 0.0;
-  currentWheelStatus.mr_articulation_angle = 180.0;
-  currentWheelStatus.rl_articulation_angle = 0.0;
-  currentWheelStatus.rr_articulation_angle = 180.0;
-  currentWheelStatus.fl_drive_speed = 0.0;
-  currentWheelStatus.fr_drive_speed = 0.0;
-  currentWheelStatus.ml_drive_speed = 0.0;
-  currentWheelStatus.mr_drive_speed = 0.0;
-  currentWheelStatus.rl_drive_speed = 0.0;
-  currentWheelStatus.rr_drive_speed = 0.0;
+  currentWheelStatus[0].orientation = 0.0;     //.fl_articulation_angle = 0.0;
+  currentWheelStatus[1].orientation = 180.0;   //.fr_articulation_angle = 180.0;
+  currentWheelStatus[2].orientation = 0.0;//.ml_articulation_angle = 0.0;
+  currentWheelStatus[3].orientation = 180.0;//.mr_articulation_angle = 180.0;
+  currentWheelStatus[4].orientation = 0.0;//.rl_articulation_angle = 0.0;
+  currentWheelStatus[5].orientation = 180.0; //.rr_articulation_angle = 180.0;
+  currentWheelStatus[0].velocity = 0.0;//.fl_drive_speed = 0.0;
+  currentWheelStatus[1].velocity = 0.0;//.fr_drive_speed = 0.0;
+  currentWheelStatus[2].velocity = 0.0;//.ml_drive_speed = 0.0;
+  currentWheelStatus[3].velocity = 0.0;//.mr_drive_speed = 0.0;
+  currentWheelStatus[4].velocity = 0.0;//.rl_drive_speed = 0.0;
+  currentWheelStatus[5].velocity = 0.0;//.rr_drive_speed = 0.0;
 }
 
 // This program does whatever ROS directs it to do.

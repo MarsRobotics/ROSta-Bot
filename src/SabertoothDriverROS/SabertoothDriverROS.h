@@ -1,4 +1,7 @@
 // Header file for the SabertoothDriverROS class.
+#include <command2ros/ManualCommand.h>
+
+
 
 // DATA STRUCTURES
 // Wheel information data structure
