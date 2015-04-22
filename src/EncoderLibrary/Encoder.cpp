@@ -5,65 +5,61 @@ Modified by Derek Schumacher on March 24, 2015
 
 ****************************************************************************************/
 #include "Encoder.h"
-
-
 //Constants from before:
-#define CPR                  400    // encoder cycles per revolution
-#define CLOCKWISE            -1       // direction constant
-#define COUNTER_CLOCKWISE    1       // direction constant
-
+#define CPR                  (400)    // encoder cycles per revolution
+#define CLOCKWISE            (-1)       // direction constant
+#define COUNTER_CLOCKWISE    (1)       // direction constant
 Encoder::Encoder(int ENCODER0PINA_in, int  ENCODER0PINB_in, int interruptID)
 {
-	ENCODER0PINA = ENCODER0PINA_in;
-	ENCODER0PINB = ENCODER0PINB_in;
-	setupEncoder();
+	this->ENCODER0PINA = ENCODER0PINA_in;
+	this->ENCODER0PINB = ENCODER0PINB_in;
+	setupEncoder(interruptID);
 }
 
-void Encoder::setupEncoder()
+void Encoder::setupEncoder(int interruptID)
 {
 
   // inputs
-  pinMode(ENCODER0PINA, INPUT);
-  pinMode(ENCODER0PINB, INPUT);
-  pinMode(ENCODER0INDEX, INPUT);
+  pinMode(this->ENCODER0PINA, INPUT);
+  pinMode(this->ENCODER0PINB, INPUT);
   
   // interrupts
-  attachInterrupt(interruptID, Encoder::onInterrupt, RISING);
+  attachInterrupt(interruptID, <static_cast>(void*())&onInterrupt, RISING);
 }
 
 long Encoder::getPosition()
 {
-	return encoder0Position;
+	return this->encoder0Position;
 }
 
 int Encoder::getRotationDirection()
 {
-	return currentDirection;
+	return this->currentDirection;
 }
 
 // interrupt function needs to do as little as possible
-void Encoder::onInterrupt()
+void onInterrupt()
 {
   // read both inputs
-  int a = digitalRead(ENCODER0PINA);
-  int b = digitalRead(ENCODER0PINB);
+  int a = digitalRead(this->ENCODER0PINA);
+  int b = digitalRead(this->ENCODER0PINB);
     
   if (a == b )
   {
     // b is leading a (counter-clockwise)
-    --encoder0Position;
-    currentDirection = COUNTER_CLOCKWISE;
+    --(this->encoder0Position);
+    this->currentDirection = COUNTER_CLOCKWISE;
   }
   else
   {
     // a is leading b (clockwise)
-    ++encoder0Position;
-    currentDirection = CLOCKWISE;
+    ++(this->encoder0Position);
+    this->currentDirection = CLOCKWISE;
   }
 
   // track 0 to 400
-  encoder0Position = encoder0Position % CPR;
+  this->encoder0Position = this->encoder0Position % CPR;
 
   // track the number of interrupts
-  ++interruptsReceived;
+  ++(this->interruptsReceived);
 }
