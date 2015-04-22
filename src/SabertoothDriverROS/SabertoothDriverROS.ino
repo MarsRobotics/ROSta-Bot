@@ -129,6 +129,7 @@ void continueDriving(){
     if(millis() < driveUntilTime)
     {
     // TODO: Drive
+    driveAllMotors();
     }
     else
     {
@@ -145,22 +146,25 @@ void articulate()
   int delta = 0;
   
   // Which direction should we rotate?
-  delta  = targetWheelStatus.fl_articulation_angle - currentWheelStatus.fl_articulation_angle;
+  delta  = targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation - currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
   if(0==delta)
   {
+    driveCounterclockwise(0, FRONT_LEFT_ARTICULATION_MOTOR_ID);
+    driveCounterclockwise(0, FRONT_LEFT_DRIVE_MOTOR_ID);
     // TODO: update this when we have multi-wheel support
     rotating = false;
+    driveUntilTime = millis() + driveTimeMillis;
   }
   else if (((delta > 0) && (delta < 180)) || 
   ((delta + 360) < 180 ))
   {
-    driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR);
-    driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR);
+    driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
+    driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
   }
   else
   {
-    driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR);
-    driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR);
+    driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
+    driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
   }
   
   
@@ -173,6 +177,16 @@ void stopAllMotors()
     for(int i = 0; i < 12; ++i)
     {
       driveClockwise(0,i);
+    }
+}
+
+// A function to drive all motors at the desired rates.
+void driveAllMotors()
+{
+    // send driving commands to all motors
+    for(int i = 0; i < 6; ++i)
+    {
+      driveClockwise(targetWheelStatus[i].velocity, i);
     }
 }
 
@@ -209,6 +223,11 @@ ros::NodeHandle sabertoothDriverNode;
 ros::Subscriber<command2ros::ManualCommand> mcSUB("???", newManualCommandCallback );
 
 
+void updateArticulationValues()
+{
+ currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (Encoder.getPosition() * 9) / 10;
+}
+
 void setup(){
   // Communicate with the computer
   sabertoothDriverNode.initNode();
@@ -235,6 +254,7 @@ void setup(){
 // So far, it drives the robot forwards and backwards.
 void loop(){
   sabertoothDriverNode.spinOnce();
+  updateArticulationValues();
   continueDriving();
   // TODO: Delete this?
   delayMicroseconds(1000);
