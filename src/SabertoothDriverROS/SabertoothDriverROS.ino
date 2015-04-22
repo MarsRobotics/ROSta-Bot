@@ -17,8 +17,6 @@
 #include "SabertoothDriverROS.h"
 
 
-Encoder::Encoder e;
-
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
 // valid control input)
