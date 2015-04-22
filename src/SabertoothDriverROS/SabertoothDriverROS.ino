@@ -12,8 +12,9 @@
  / communications.
  */
 #include <ros.h>
+#include <Encoder.h>
 #include <command2ros/ManualCommand.h>
-#include <SabertoothDriverROS.h>
+#include "SabertoothDriverROS.h"
 
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
@@ -33,8 +34,8 @@ unsigned long driveUntilTime = 0;
 
 // By default, the velocity is zero.
 char current_velocity = 0;
-Wheel_status[6] targetWheelStatus;
-Wheel_status[6] currentWheelStatus;
+Wheel_status targetWheelStatus[6];
+Wheel_status currentWheelStatus[6];
 
 void newManualCommandCallback(const command2ros::ManualCommand& nmc)
 {
@@ -220,7 +221,7 @@ void driveCounterclockwise(char speed, char motor){
 // This node handle represents this arduino. 
 ros::NodeHandle sabertoothDriverNode;
 // Subscribers for intended drive velocity and direction
-ros::Subscriber<command2ros::ManualCommand> mcSUB("???", newManualCommandCallback );
+ros::Subscriber<command2ros::ManualCommand> mcSUB("???", &newManualCommandCallback );
 
 
 void updateArticulationValues()

@@ -3,8 +3,8 @@
 // DATA STRUCTURES
 // Wheel information data structure
 typedef struct wheel_status_tag {
-  int orientation,
-  long velocity
+  int orientation;
+  long velocity;
 } Wheel_status;
 
 // CONSTANTS 
@@ -97,7 +97,7 @@ const unsigned char MOTOR_COMMAND[12] = {
   const unsigned char ARTICULATION_SPEED = 50;
   // The articulation drive speed is 6260/7521 timmes the articulation speed.
   // Use longs for the math so we don't overflow (Arduino int is 16-bit, long is 32-bit).
-  const unsigned char ARTICULATION_DRIVE_SPEED = (char)((L50 * L6260) / L7521);
+  const unsigned char ARTICULATION_DRIVE_SPEED = (char)((50L * 6260L) / 7521L);
   
   // FUNCTIONS
 void newManualCommandCallback(const command2ros::ManualCommand& nmc);
