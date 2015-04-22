@@ -9,27 +9,36 @@ Modified by Derek Schumacher on March 24, 2015
 #define CPR                  (400)    // encoder cycles per revolution
 #define CLOCKWISE            (-1)       // direction constant
 #define COUNTER_CLOCKWISE    (1)       // direction constant
+
+// Static member definitions
+int Encoder::ENCODERPINA;
+int Encoder::ENCODERPINB;
+int Encoder::INTERRUPTID;
+volatile int Encoder::encoderPosition;
+volatile long Encoder::interruptsReceived;
+volatile short Encoder::currentDirection; 
+long Encoder::previousPosition;
+
 Encoder::Encoder()
 {
-	Encoder::ENCODERPINA = 3;
-	Encoder::ENCODERPINB = 4;
-	Encoder::INTERRUPTID = 1;
-	Encoder::encoderPosition = 0;
-	Encoder::interruptsReceived = 0;
-	Encoder::currentDirection = -1;
-	Encoder::previousPosition = 0;
 	Encoder::setupEncoder();
 }
 
 void Encoder::setupEncoder()
 {
-  
+  Encoder::ENCODERPINA = 3;
+  Encoder::ENCODERPINB = 4;
+  Encoder::INTERRUPTID = 1;
+  Encoder::encoderPosition = 0;
+  Encoder::interruptsReceived = 0;
+  Encoder::currentDirection = -1;
+  Encoder::previousPosition = 0;
   // inputs
   pinMode(Encoder::ENCODERPINA, INPUT);
   pinMode(Encoder::ENCODERPINB, INPUT);
   
   // interrupts
-  attachInterrupt(Encoder::INTERRUPTID, &onEncoderInterrupt, RISING);
+  attachInterrupt(Encoder::INTERRUPTID, &Encoder::onEncoderInterrupt, RISING);
 }
 
 int Encoder::getRotationDirection()
@@ -43,7 +52,7 @@ int Encoder::getPosition()
 }
 
 // interrupt function needs to do as little as possible
-void onEncoderInterrupt()
+void Encoder::onEncoderInterrupt()
 {
   // read both inputs
   int a = digitalRead(Encoder::ENCODERPINA);

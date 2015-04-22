@@ -19,7 +19,7 @@ class Encoder
 	static volatile short currentDirection; // CLOCKWISE
 	// track last position so we know whether it's worth printing new output
 	static long previousPosition;
-	static void setupEncoder();
+	static void setupEncoder();	
 	static void onEncoderInterrupt();
 };
 
