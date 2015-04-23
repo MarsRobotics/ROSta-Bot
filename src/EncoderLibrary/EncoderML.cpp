@@ -26,9 +26,9 @@ EncoderML::EncoderML()
 
 void EncoderML::setupEncoderML()
 {
-  EncoderML::EncoderMLPINA = 3;
-  EncoderML::EncoderMLPINB = 4;
-  EncoderML::INTERRUPTID = 1;
+  EncoderML::EncoderMLPINA = 18;
+  EncoderML::EncoderMLPINB = 7;
+  EncoderML::INTERRUPTID = 5;
   EncoderML::EncoderMLPosition = 0;
   EncoderML::interruptsReceived = 0;
   EncoderML::currentDirection = -1;

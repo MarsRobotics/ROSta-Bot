@@ -26,9 +26,9 @@ EncoderFR::EncoderFR()
 
 void EncoderFR::setupEncoderFR()
 {
-  EncoderFR::EncoderFRPINA = 3;
-  EncoderFR::EncoderFRPINB = 4;
-  EncoderFR::INTERRUPTID = 1;
+  EncoderFR::EncoderFRPINA = 20;
+  EncoderFR::EncoderFRPINB = 5;
+  EncoderFR::INTERRUPTID = 3;
   EncoderFR::EncoderFRPosition = 0;
   EncoderFR::interruptsReceived = 0;
   EncoderFR::currentDirection = -1;

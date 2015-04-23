@@ -26,9 +26,9 @@ EncoderMR::EncoderMR()
 
 void EncoderMR::setupEncoderMR()
 {
-  EncoderMR::EncoderMRPINA = 3;
-  EncoderMR::EncoderMRPINB = 4;
-  EncoderMR::INTERRUPTID = 1;
+  EncoderMR::EncoderMRPINA = 19;
+  EncoderMR::EncoderMRPINB = 6;
+  EncoderMR::INTERRUPTID = 4;
   EncoderMR::EncoderMRPosition = 0;
   EncoderMR::interruptsReceived = 0;
   EncoderMR::currentDirection = -1;

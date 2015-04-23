@@ -26,9 +26,9 @@ EncoderRR::EncoderRR()
 
 void EncoderRR::setupEncoderRR()
 {
-  EncoderRR::EncoderRRPINA = 3;
+  EncoderRR::EncoderRRPINA = 21;
   EncoderRR::EncoderRRPINB = 4;
-  EncoderRR::INTERRUPTID = 1;
+  EncoderRR::INTERRUPTID = 2;
   EncoderRR::EncoderRRPosition = 0;
   EncoderRR::interruptsReceived = 0;
   EncoderRR::currentDirection = -1;

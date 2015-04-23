@@ -27,7 +27,7 @@ EncoderRL::EncoderRL()
 void EncoderRL::setupEncoderRL()
 {
   EncoderRL::EncoderRLPINA = 3;
-  EncoderRL::EncoderRLPINB = 4;
+  EncoderRL::EncoderRLPINB = 8;
   EncoderRL::INTERRUPTID = 1;
   EncoderRL::EncoderRLPosition = 0;
   EncoderRL::interruptsReceived = 0;
