@@ -1,3 +1,5 @@
+
+
 /* 
  / This is a simple Arduino program that demonstrates the
  / "Packetized Serial" method of using the Sabertooth Motor
@@ -13,14 +15,23 @@
  */
 #include <ros.h>
 #include <std_msgs/Int32.h>
-#include <Encoder.h>
 #include <command2ros/ManualCommand.h>
+#include <EncoderFL.h>
+#include <EncoderML.h>
+#include <EncoderFR.h>
+#include <EncoderMR.h>
+#include <EncoderRL.h>
+#include <EncoderRR.h>
 #include "SabertoothDriverROS.h"
-
 
 std_msgs::Int32 msg;
 ros::Publisher pubResults("testing", &msg);
-
+EncoderFL efl;
+EncoderML eml;
+EncoderFR efr;
+EncoderMR emr;
+EncoderRL erl;
+EncoderRR err;
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
 // valid control input)
@@ -247,18 +258,59 @@ ros::Subscriber<command2ros::ManualCommand> mcSUB("ManualCommand", &newManualCom
 
 void updateArticulationValues()
 {
-  int temp = Encoder::getPosition();
+  int temp = EncoderFL::getPosition();
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  
+  temp = EncoderML::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  
+  temp = EncoderRL::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  
+  temp = EncoderFR::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  
+  temp = EncoderMR::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  
+  temp = EncoderRR::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
 }
 
 void setup(){
   
   // Communicate with the computer
-  Encoder::setupEncoder();
+  EncoderFL::setupEncoderFL();
+  EncoderML::setupEncoderFL();
+  EncoderRL::setupEncoderFL();
+  EncoderFR::setupEncoderFL();
+  EncoderMR::setupEncoderFL();
+  EncoderRR::setupEncoderFL();
+  
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(mcSUB);
   sabertoothDriverNode.advertise(pubResults);
