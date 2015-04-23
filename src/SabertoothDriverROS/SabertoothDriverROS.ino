@@ -12,10 +12,14 @@
  / communications.
  */
 #include <ros.h>
-#include <EncoderLibrary/Encoder.h>
+#include <std_msgs/Int32.h>
+#include <Encoder.h>
 #include <command2ros/ManualCommand.h>
 #include "SabertoothDriverROS.h"
 
+
+std_msgs::Int32 msg;
+ros::Publisher pubResults("testing", &msg);
 
 // Have we done a software E-stop?
 // By default, we have (this way the robot won't move until we get 
@@ -25,6 +29,7 @@ bool emergencyStop = true;
 // Is the robot currently rotating?
 // If true, we should override motor drive velocity with rotation velocity.
 bool currentlyRotating = false;
+bool currentlyDriving = false;
 
 // How long should we drive for (milliseconds)?
 unsigned long driveTimeMillis = 0;
@@ -130,11 +135,16 @@ void continueDriving(){
     // If we still intend to drive, do so.
     if(millis() < driveUntilTime)
     {
-    // TODO: Drive
-    driveAllMotors();
+      if(!currentlyDriving)
+      {
+        // TODO: Drive
+        driveAllMotors();
+        currentlyDriving = true;
+      }
     }
     else
     {
+      currentlyDriving = false;
       stopAllMotors();
     }
   }
@@ -155,18 +165,28 @@ void articulate()
     driveCounterclockwise(0, FRONT_LEFT_DRIVE_MOTOR_ID);
     // TODO: update this when we have multi-wheel support
     currentlyRotating = false;
+    currentlyDriving = false;
     driveUntilTime = millis() + driveTimeMillis;
   }
   else if (((delta > 0) && (delta < 180)) || 
   ((delta + 360) < 180 ))
   {
-    driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
-    driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
+    if(!currentlyDriving)
+    {
+      driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
+      driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
+      currentlyDriving = true;
+    }
+    
   }
   else
   {
-    driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
-    driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
+    if(!currentlyDriving)
+    {
+      driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
+      driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
+      currentlyDriving = true;
+    }
   }
   
   
@@ -222,18 +242,26 @@ void driveCounterclockwise(char speed, char motor){
 // This node handle represents this arduino. 
 ros::NodeHandle sabertoothDriverNode;
 // Subscribers for intended drive velocity and direction
-ros::Subscriber<command2ros::ManualCommand> mcSUB("???", &newManualCommandCallback );
+ros::Subscriber<command2ros::ManualCommand> mcSUB("ManualCommand", &newManualCommandCallback );
 
 
 void updateArticulationValues()
 {
- currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (Encoder::getPosition() * 9) / 10;
+  int temp = Encoder::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
 }
 
 void setup(){
+  
   // Communicate with the computer
+  Encoder::setupEncoder();
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(mcSUB);
+  sabertoothDriverNode.advertise(pubResults);
   // Communicate with the Sabertooth
   Serial3.begin(9600);
   
@@ -255,10 +283,12 @@ void setup(){
 // This program does whatever ROS directs it to do.
 // So far, it drives the robot forwards and backwards.
 void loop(){
+  delayMicroseconds(100000);
   sabertoothDriverNode.spinOnce();
   updateArticulationValues();
   continueDriving();
   // TODO: Delete this?
-  delayMicroseconds(1000);
+   msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
+ pubResults.publish(&msg);
 
 }

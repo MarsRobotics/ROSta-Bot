@@ -103,7 +103,7 @@ const unsigned char MOTOR_COMMAND[12] = {
   const unsigned char ARTICULATION_DRIVE_SPEED = (char)((50L * 6260L) / 7521L);
   
   // FUNCTIONS
-void newManualCommandCallback(const command2ros::ManualCommand& nmc);
+
 bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc);
 void continueDriving();
 void driveClockwise(char speed, char motor);
