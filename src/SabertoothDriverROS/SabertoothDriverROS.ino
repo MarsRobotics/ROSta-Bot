@@ -78,6 +78,20 @@ void newManualCommandCallback(const command2ros::ManualCommand& nmc)
   }
   driveTimeMillis = (long)(nmc.drive_duration * 1000);
   emergencyStop = nmc.e_stop;
+  
+  if(emergencyStop == true)
+  {
+    char* error = "Setting E-Stop to TRUE.";
+    msg.data = error;
+    pubResults.publish(&msg);  
+  }
+  else
+  {
+    char* error = "Setting E-Stop to FALSE.";
+    msg.data = error;
+    pubResults.publish(&msg);   
+  }
+  
 }
 
 
@@ -149,7 +163,14 @@ void continueDriving(){
   // Short-circuit on EStop!
   if(emergencyStop)
   { 
+    if (!currentlyStopped) {
+      char* error = "E-Stopped all motors.";
+      msg.data = error;
+      pubResults.publish(&msg);  
+      
+    }
     stopAllMotors();
+   
     // short-circuit
     return;
   }
@@ -174,19 +195,24 @@ void continueDriving(){
     else
     {
       currentlyDriving = false;
+      char* error = "done: Stopped all motors.";
+      msg.data = error;
+      pubResults.publish(&msg);  
+      
       stopAllMotors();
     }
   }
 
 }
 
+bool currentlyMoving[6];
 // A function to articulate the wheels to face the desired orientation.
 void articulate()
 {
   // For now, only articulate the FRONT LEFT wheel.
   int delta = 0;
   int motorIDX;
-  static bool currentlyMoving[6];
+ 
   bool stillRotating = false;
 
   for(motorIDX = 0; motorIDX <= 5; ++motorIDX)
@@ -208,6 +234,7 @@ void articulate()
     else if (((delta > 0) && (delta < 180)) || 
       ((delta + 360) < 180 ))
     {
+      stillRotating = true;
       if(!currentlyMoving[motorIDX])
       {
         char* error = "Starting motor: X";
@@ -217,7 +244,6 @@ void articulate()
         pubResults.publish(&msg);
         driveCounterclockwise(ARTICULATION_SPEED, motorIDX + ARTICULATION_OFFSET);
         driveCounterclockwise(ARTICULATION_DRIVE_SPEED, motorIDX);
-        stillRotating = true;
         currentlyMoving[motorIDX] = true;
       }
 
