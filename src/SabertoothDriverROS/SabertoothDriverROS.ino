@@ -279,21 +279,21 @@ void updateArticulationValues()
   }
   currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
   
-  temp = EncoderFR::getPosition();
+  temp = EncoderFR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
   
-  temp = EncoderMR::getPosition();
+  temp = EncoderMR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
   
-  temp = EncoderRR::getPosition();
+  temp = EncoderRR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
@@ -305,11 +305,11 @@ void setup(){
   
   // Communicate with the computer
   EncoderFL::setupEncoderFL();
-  EncoderML::setupEncoderFL();
-  EncoderRL::setupEncoderFL();
-  EncoderFR::setupEncoderFL();
-  EncoderMR::setupEncoderFL();
-  EncoderRR::setupEncoderFL();
+  EncoderML::setupEncoderML();
+  EncoderRL::setupEncoderRL();
+  EncoderFR::setupEncoderFR();
+  EncoderMR::setupEncoderMR();
+  EncoderRR::setupEncoderRR();
   
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(mcSUB);
