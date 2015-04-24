@@ -14,7 +14,7 @@
  / communications.
  */
 #include <ros.h>
-#include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <command2ros/ManualCommand.h>
 #include <EncoderFL.h>
 #include <EncoderML.h>
@@ -24,7 +24,7 @@
 #include <EncoderRR.h>
 #include "SabertoothDriverROS.h"
 
-std_msgs::Int32 msg;
+std_msgs::String msg;
 ros::Publisher pubResults("testing", &msg);
 EncoderFL efl;
 EncoderML eml;
@@ -42,6 +42,7 @@ bool emergencyStop = true;
 bool currentlyRotating = false;
 bool currentlyDriving = false;
 
+const int ARTICULATION_OFFSET = 6;
 // How long should we drive for (milliseconds)?
 unsigned long driveTimeMillis = 0;
 //DriveUntil: Used when driving forwards.
@@ -56,10 +57,10 @@ Wheel_status currentWheelStatus[6];
 
 void newManualCommandCallback(const command2ros::ManualCommand& nmc)
 {
- // TODO: Update wheel status info. Determine if we need to rotate.
- currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
- driveTimeMillis = (long)(nmc.drive_duration * 1000);
- emergencyStop = nmc.e_stop;
+  // TODO: Update wheel status info. Determine if we need to rotate.
+  currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
+  driveTimeMillis = (long)(nmc.drive_duration * 1000);
+  emergencyStop = nmc.e_stop;
 }
 
 
@@ -75,42 +76,42 @@ bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc)
     retval = true;
     targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.fl_articulation_angle;
   }
-  
+
   // Check if the middle-left wheel orientation should be changed.
   if(targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.ml_articulation_angle)
   {
     retval = true;
     targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.ml_articulation_angle;
   }
-  
+
   // Check if the rear-left wheel orientation should be changed.
   if(targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.rl_articulation_angle)
   {
     retval = true;
     targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.rl_articulation_angle;
   }
-  
+
   // Check if the front-right wheel orientation should be changed.
   if(targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.fr_articulation_angle)
   {
     retval = true;
     targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.fr_articulation_angle;
   }
-  
+
   // Check if the middle-right wheel orientation should be changed.
   if(targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.mr_articulation_angle)
   {
     retval = true;
     targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.mr_articulation_angle;
   }
-  
+
   // Check if the rear-right wheel orientation should change.
   if(targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.rr_articulation_angle)
   {
     retval = true;
     targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.rr_articulation_angle;
   }
-  
+
   // Update target drive speeds.
   targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.fl_drive_speed;
   targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.fr_drive_speed;
@@ -119,7 +120,7 @@ bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc)
   targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.rl_drive_speed;
   targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.rr_drive_speed;
   return retval;
-    
+
 }
 
 
@@ -135,7 +136,7 @@ void continueDriving(){
     // short-circuit
     return;
   }
-  
+
   if(currentlyRotating)
   {
     // TODO:Rotate 
@@ -159,7 +160,7 @@ void continueDriving(){
       stopAllMotors();
     }
   }
-  
+
 }
 
 // A function to articulate the wheels to face the desired orientation.
@@ -167,60 +168,88 @@ void articulate()
 {
   // For now, only articulate the FRONT LEFT wheel.
   int delta = 0;
-  
-  // Which direction should we rotate?
-  delta  = targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation - currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
-  if(0==delta)
+  int motorIDX;
+  static bool currentlyMoving[6];
+  bool stillRotating = false;
+
+  for(motorIDX = 0; motorIDX <= 5; ++motorIDX)
   {
-    driveCounterclockwise(0, FRONT_LEFT_ARTICULATION_MOTOR_ID);
-    driveCounterclockwise(0, FRONT_LEFT_DRIVE_MOTOR_ID);
-    // TODO: update this when we have multi-wheel support
-    currentlyRotating = false;
-    currentlyDriving = false;
-    driveUntilTime = millis() + driveTimeMillis;
-  }
-  else if (((delta > 0) && (delta < 180)) || 
-  ((delta + 360) < 180 ))
-  {
-    if(!currentlyDriving)
+    // Which direction should we rotate?
+    delta  = targetWheelStatus[motorIDX].orientation - currentWheelStatus[motorIDX].orientation;
+    if(delta < 3 && delta > -3)
     {
-      driveCounterclockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
-      driveCounterclockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
-      currentlyDriving = true;
+      driveCounterclockwise(0, motorIDX + ARTICULATION_OFFSET);
+      driveCounterclockwise(0, motorIDX);
+      
+      char* error = "Stopping motor: X";
+      error[16] = '0'+motorIDX;
+      msg.data = error;
+      pubResults.publish(&msg);
+      // TODO: update this when we have multi-wheel support
+      currentlyMoving[motorIDX] = false;
     }
-    
+    else if (((delta > 0) && (delta < 180)) || 
+      ((delta + 360) < 180 ))
+    {
+      if(!currentlyMoving[motorIDX])
+      {
+        char* error = "Starting motor: X";
+        error[16] = '0'+motorIDX;
+        msg.data = error;
+        pubResults.publish(&msg);
+        driveCounterclockwise(ARTICULATION_SPEED, motorIDX + ARTICULATION_OFFSET);
+        driveCounterclockwise(ARTICULATION_DRIVE_SPEED, motorIDX);
+        stillRotating = true;
+        currentlyMoving[motorIDX] = true;
+      }
+
+    }
+    else
+    {
+      if(!currentlyMoving[motorIDX])
+      {
+        char* error = "Starting motor: X";
+        error[16] = '0'+motorIDX;
+        msg.data = error;
+        pubResults.publish(&msg);
+        driveClockwise(ARTICULATION_SPEED, motorIDX + ARTICULATION_OFFSET);
+        driveClockwise(ARTICULATION_DRIVE_SPEED, motorIDX);
+        stillRotating = true;
+        currentlyMoving[motorIDX] = true;
+      }
+    }
+  }
+
+  if(!stillRotating)
+  {
+    driveUntilTime = millis() + driveTimeMillis;
+    currentlyRotating = false;
   }
   else
   {
-    if(!currentlyDriving)
-    {
-      driveClockwise(ARTICULATION_SPEED, FRONT_LEFT_ARTICULATION_MOTOR_ID);
-      driveClockwise(ARTICULATION_DRIVE_SPEED, FRONT_LEFT_DRIVE_MOTOR_ID);
-      currentlyDriving = true;
-    }
+    currentlyRotating = true;
   }
-  
-  
+
 }
 
 // A function that tells all motors to stop moving.
 void stopAllMotors()
 {
-    // send stop-driving commands to all motors
-    for(int i = 0; i < 12; ++i)
-    {
-      driveClockwise(0,i);
-    }
+  // send stop-driving commands to all motors
+  for(int i = 0; i < 12; ++i)
+  {
+    driveClockwise(0,i);
+  }
 }
 
 // A function to drive all motors at the desired rates.
 void driveAllMotors()
 {
-    // send driving commands to all motors
-    for(int i = 0; i < 6; ++i)
-    {
-      driveClockwise(targetWheelStatus[i].velocity, i);
-    }
+  // send driving commands to all motors
+  for(int i = 0; i < 6; ++i)
+  {
+    driveClockwise(targetWheelStatus[i].velocity, i);
+  }
 }
 
 // Function to drive a specific motor forward. 
@@ -264,35 +293,35 @@ void updateArticulationValues()
     temp += 400;
   }
   currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  
+
   temp = EncoderML::getPosition();
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  
+
   temp = EncoderRL::getPosition();
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  
+
   temp = EncoderFR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  
+
   temp = EncoderMR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  
+
   temp = EncoderRR::getPosition() - 200;
   if (temp < 0)
   {
@@ -302,7 +331,7 @@ void updateArticulationValues()
 }
 
 void setup(){
-  
+
   // Communicate with the computer
   EncoderFL::setupEncoderFL();
   EncoderML::setupEncoderML();
@@ -310,13 +339,13 @@ void setup(){
   EncoderFR::setupEncoderFR();
   EncoderMR::setupEncoderMR();
   EncoderRR::setupEncoderRR();
-  
+
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(mcSUB);
   sabertoothDriverNode.advertise(pubResults);
   // Communicate with the Sabertooth
   Serial3.begin(9600);
-  
+
   // Initialize current wheel status: Assume we're in "closed" position
   currentWheelStatus[0].orientation = 0.0;     //.fl_articulation_angle = 0.0;
   currentWheelStatus[1].orientation = 180.0;   //.fr_articulation_angle = 180.0;
@@ -340,7 +369,8 @@ void loop(){
   updateArticulationValues();
   continueDriving();
   // TODO: Delete this?
-   msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
- pubResults.publish(&msg);
+//  msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
+//  pubResults.publish(&msg);
 
 }
+
