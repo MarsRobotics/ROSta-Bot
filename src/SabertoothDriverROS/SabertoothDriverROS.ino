@@ -43,7 +43,12 @@ bool currentlyRotating = false;
 bool currentlyDriving = false;
 bool currentlyStopped = false;
 
+//Wheel is 0-6
 const int ARTICULATION_OFFSET = 6;
+
+//Articulation joints try to rotate to a certain point +- ARTICULATION_PLAY
+const int ARTICULATION_PLAY = 3;
+
 // How long should we drive for (milliseconds)?
 unsigned long driveTimeMillis = 0;
 //DriveUntil: Used when driving forwards.
@@ -218,8 +223,10 @@ void articulate()
   for(motorIDX = 0; motorIDX <= 5; ++motorIDX)
   {
     // Which direction should we rotate?
-    delta  = targetWheelStatus[motorIDX].orientation - currentWheelStatus[motorIDX].orientation;
-    if(delta < 3 && delta > -3)
+    delta  = targetWheelStatus[motorIDX].orientation - currentWheelStatus[motorIDX].orientation
+    
+    //If we are close enough to the target then stop moving
+    if(delta < ARTICULATION_PLAY && delta > -ARTICULATION_PLAY)
     {
       driveCounterclockwise(0, motorIDX + ARTICULATION_OFFSET);
       driveCounterclockwise(0, motorIDX);
@@ -231,10 +238,12 @@ void articulate()
       // TODO: update this when we have multi-wheel support
       currentlyMoving[motorIDX] = false;
     }
-    else if (((delta > 0) && (delta < 180)) || 
-      ((delta + 360) < 180 ))
+    
+    //Rotate the shortest distance to face
+    else if (((delta > 0) && (delta < 180)) || ((delta + 360) < 180 ))
     {
       stillRotating = true;
+      //So we only send one drive command
       if(!currentlyMoving[motorIDX])
       {
         char* error = "Starting motor: X";
@@ -248,6 +257,7 @@ void articulate()
       }
 
     }
+    //
     else
     {
       if(!currentlyMoving[motorIDX])
@@ -264,7 +274,7 @@ void articulate()
       }
     }
   }
-
+  //Done rotating, drive until we get to a certain time
   if(!stillRotating)
   {
     driveUntilTime = millis() + driveTimeMillis;
