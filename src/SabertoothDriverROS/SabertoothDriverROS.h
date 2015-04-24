@@ -17,17 +17,17 @@ const char FORWARD_LABEL = 1;
 const char BACKWARD_LABEL = 2;
 // Motor constants (used to communicate with the onboard computer).
 const unsigned char FRONT_LEFT_DRIVE_MOTOR_ID = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ID = 1;
-const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ID = 2;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ID = 1; // positive on purple
+const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_ID = 2; 
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_ID = 3;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_ID = 4;
+const unsigned char REAR_LEFT_DRIVE_MOTOR_ID = 4; // Went clockwise. positive on white should be opposite articulation
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_ID = 5;
 // Articulation motors
 const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_ID = 6;
 const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_ID = 7;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ID = 8;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_ID = 8; // went clockwise. positive on white
 const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_ID = 9;
-const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ID = 10;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_ID = 10; // Went clockwise. positive on white
 const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_ID = 11;
 
 // Motor addressing (used to link the computer-constants to
@@ -56,7 +56,7 @@ const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 4;
+const unsigned char REAR_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char REAR_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 // Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
 // a value of 1 or 5 corresponds to "clockwise".
