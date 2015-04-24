@@ -41,6 +41,7 @@ bool emergencyStop = true;
 // If true, we should override motor drive velocity with rotation velocity.
 bool currentlyRotating = false;
 bool currentlyDriving = false;
+bool currentlyStopped = false;
 
 const int ARTICULATION_OFFSET = 6;
 // How long should we drive for (milliseconds)?
@@ -57,8 +58,24 @@ Wheel_status currentWheelStatus[6];
 
 void newManualCommandCallback(const command2ros::ManualCommand& nmc)
 {
+  char* error = "received command";
+  msg.data = error;
+  pubResults.publish(&msg);
+  
   // TODO: Update wheel status info. Determine if we need to rotate.
   currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
+  if(currentlyRotating)
+  {
+    char* error = "currentlyRotating is TRUE.";
+    msg.data = error;
+    pubResults.publish(&msg);  
+  }
+  else
+  {
+    char* error = "currentlyRotating is FALSE.";
+    msg.data = error;
+    pubResults.publish(&msg);   
+  }
   driveTimeMillis = (long)(nmc.drive_duration * 1000);
   emergencyStop = nmc.e_stop;
 }
@@ -131,7 +148,7 @@ bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc)
 void continueDriving(){
   // Short-circuit on EStop!
   if(emergencyStop)
-  {
+  { 
     stopAllMotors();
     // short-circuit
     return;
@@ -180,7 +197,7 @@ void articulate()
     {
       driveCounterclockwise(0, motorIDX + ARTICULATION_OFFSET);
       driveCounterclockwise(0, motorIDX);
-      
+
       char* error = "Stopping motor: X";
       error[16] = '0'+motorIDX;
       msg.data = error;
@@ -194,6 +211,7 @@ void articulate()
       if(!currentlyMoving[motorIDX])
       {
         char* error = "Starting motor: X";
+        currentlyStopped = false;
         error[16] = '0'+motorIDX;
         msg.data = error;
         pubResults.publish(&msg);
@@ -209,6 +227,7 @@ void articulate()
       if(!currentlyMoving[motorIDX])
       {
         char* error = "Starting motor: X";
+        currentlyStopped = false;
         error[16] = '0'+motorIDX;
         msg.data = error;
         pubResults.publish(&msg);
@@ -235,10 +254,16 @@ void articulate()
 // A function that tells all motors to stop moving.
 void stopAllMotors()
 {
-  // send stop-driving commands to all motors
-  for(int i = 0; i < 12; ++i)
-  {
-    driveClockwise(0,i);
+  if (!currentlyStopped) {
+    currentlyStopped = true;
+    // send stop-driving commands to all motors
+    for(int i = 0; i < 12; ++i)
+    {
+      driveClockwise(0,i);
+    }
+    char* error = "Stopping all motors.";
+    msg.data = error;
+    pubResults.publish(&msg);  
   }
 }
 
@@ -265,6 +290,7 @@ void driveClockwise(char speed, char motor){
   Serial3.write(command);
   Serial3.write(speed);
   Serial3.write(checksum);
+  delayMicroseconds(1000);
 }
 
 // Function to drive a specific motor backwards. 
@@ -277,6 +303,7 @@ void driveCounterclockwise(char speed, char motor){
   Serial3.write(command);
   Serial3.write(speed);
   Serial3.write(checksum);
+  delayMicroseconds(1000);
 }
 
 // This node handle represents this arduino. 
@@ -369,8 +396,9 @@ void loop(){
   updateArticulationValues();
   continueDriving();
   // TODO: Delete this?
-//  msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
-//  pubResults.publish(&msg);
+  //  msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
+  //  pubResults.publish(&msg);
 
 }
+
 
