@@ -25,7 +25,10 @@
 #include "SabertoothDriverROS.h"
 
 std_msgs::String msg;
+command2ros::ManualCommand currentRotationMessage
 ros::Publisher pubResults("testing", &msg);
+ros::Publisher pubCurrentRotation("Current Rotation", &currentRotationMessage)// current rotation data for each wheel. 
+                                                                              // This will publish when the angle is updated.
 EncoderFL efl;
 EncoderML eml;
 EncoderFR efr;
@@ -347,7 +350,9 @@ ros::NodeHandle sabertoothDriverNode;
 // Subscribers for intended drive velocity and direction
 ros::Subscriber<command2ros::ManualCommand> mcSUB("ManualCommand", &newManualCommandCallback );
 
-
+/**
+* Gets the last known position of each articulation joint, and updates acordingly.
+*/
 void updateArticulationValues()
 {
   int temp = EncoderFL::getPosition();
@@ -356,6 +361,7 @@ void updateArticulationValues()
     temp += 400;
   }
   currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.FRONT_LEFT_articulation_angle = currentWheelStatus[FRONT_LIGHT_DRIVE_MOTOR_ID].orientation;
 
   temp = EncoderML::getPosition();
   if (temp < 0)
@@ -363,6 +369,7 @@ void updateArticulationValues()
     temp += 400;
   }
   currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.ml_articulation_angle = currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation;
 
   temp = EncoderRL::getPosition();
   if (temp < 0)
@@ -370,13 +377,15 @@ void updateArticulationValues()
     temp += 400;
   }
   currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.rl_articulation_angle = currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation;
 
-  temp = EncoderFR::getPosition() - 200;
+  temp = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
   if (temp < 0)
   {
     temp += 400;
   }
   currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.fr_articulation_angle = currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation;
 
   temp = EncoderMR::getPosition() - 200;
   if (temp < 0)
@@ -384,15 +393,24 @@ void updateArticulationValues()
     temp += 400;
   }
   currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.mr_articulation_angle = currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation;
 
   temp = EncoderRR::getPosition() - 200;
   if (temp < 0)
   {
     temp += 400;
   }
+
   currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
+  currentRotationMessage.rr_articulation_angle = currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation;
+
+  pubCurrentRotation.publish(&currentRotationMessage);
 }
 
+/**
+* Is called on starting the arduino.
+* 
+*/
 void setup(){
 
   // Communicate with the computer
@@ -405,30 +423,50 @@ void setup(){
 
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(mcSUB);
-  sabertoothDriverNode.advertise(pubResults);
+
   // Communicate with the Sabertooth
   Serial3.begin(9600);
 
+  // Initialize the message
+  currentRotationMessage.fl_articulation_angle = 0;
+  currentRotationMessage.fr_articulation_angle = 180;
+  currentRotationMessage.ml_articulation_angle = 0;
+  currentRotationMessage.mr_articulation_angle = 180;
+  currentRotationMessage.rl_articulation_angle = 0;
+  currentRotationMessage.rr_articulation_angle = 180;
+  
+  currentRotationMessage.fl_drive_speed = 0;
+  currentRotationMessage.fr_drive_speed = 0;
+  currentRotationMessage.ml_drive_speed = 0;
+  currentRotationMessage.mr_drive_speed = 0;
+  currentRotationMessage.rl_drive_speed = 0;
+  currentRotationMessage.rr_drive_speed = 0;
+
   // Initialize current wheel status: Assume we're in "closed" position
-  currentWheelStatus[0].orientation = 0.0;     //.fl_articulation_angle = 0.0;
-  currentWheelStatus[1].orientation = 180.0;   //.fr_articulation_angle = 180.0;
-  currentWheelStatus[2].orientation = 0.0;//.ml_articulation_angle = 0.0;
-  currentWheelStatus[3].orientation = 180.0;//.mr_articulation_angle = 180.0;
-  currentWheelStatus[4].orientation = 0.0;//.rl_articulation_angle = 0.0;
-  currentWheelStatus[5].orientation = 180.0; //.rr_articulation_angle = 180.0;
-  currentWheelStatus[0].velocity = 0.0;//.fl_drive_speed = 0.0;
-  currentWheelStatus[1].velocity = 0.0;//.fr_drive_speed = 0.0;
-  currentWheelStatus[2].velocity = 0.0;//.ml_drive_speed = 0.0;
-  currentWheelStatus[3].velocity = 0.0;//.mr_drive_speed = 0.0;
-  currentWheelStatus[4].velocity = 0.0;//.rl_drive_speed = 0.0;
-  currentWheelStatus[5].velocity = 0.0;//.rr_drive_speed = 0.0;
+  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;     //.fl_articulation_angle = 0.0;
+  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0;   //.fr_articulation_angle = 180.0;
+  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;//.ml_articulation_angle = 0.0;
+  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0;//.mr_articulation_angle = 180.0;
+  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;//.rl_articulation_angle = 0.0;
+  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0; //.rr_articulation_angle = 180.0;
+  
+  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.fl_drive_speed = 0.0;
+  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.fr_drive_speed = 0.0;
+  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.ml_drive_speed = 0.0;
+  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.mr_drive_speed = 0.0;
+  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.rl_drive_speed = 0.0;
+  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.rr_drive_speed = 0.0;
+
+  // Publish our stuff
+  sabertoothDriverNode.advertise(pubResults);
+  sabertoothDriverNode.advertise(pubCurrentRotation);
 }
 
 // This program does whatever ROS directs it to do.
 // So far, it drives the robot forwards and backwards.
 void loop(){
   delayMicroseconds(100000);
-  sabertoothDriverNode.spinOnce();
+  sabertoothDriverNode.spinOnce(); // Check for subscriber update/update timestamp
   updateArticulationValues();
   continueDriving();
   // TODO: Delete this?
