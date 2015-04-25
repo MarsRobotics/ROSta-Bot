@@ -106,17 +106,23 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
   wheelTarget.mr_drive_speed = newManualCommand.mr_drive_speed;
   wheelTarget.rr_drive_speed = newManualCommand.rr_drive_speed;
 
+  //How long we will be driving from (in seconds)
+  wheelTarget.drive_duration = newManualCommand.drive_duration;
+
   //Set E-Stop Command
   wheelTarget.e_stop = newManualCommand.e_stop;
+
+  //Set the state of 
   if (wheelTarget.e_stop == true) {
     //TODO: Make this E_STOPPED for final product
     currentStatus = STOPPED;
     stopAllMotors(false);
+  } else if (needsToArticulate() == true) {
+     articulateAllWheels();
+  } else {
+     currentStatus = START_DRIVING;
   }
 
-
-  //How long we will be driving from (in seconds)
-  wheelTarget.drive_duration = newManualCommand.drive_duration;
 }
 ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback );
 
@@ -131,10 +137,6 @@ ros::Publisher pubwheelStatus("current_rotation", &wheelStatus);// current rotat
 //Publisher to print debug statements
 std_msgs::String debugMsg;
 ros::Publisher pubDebug("sabertooth_debugger", &debugMsg);
-
-
-
-
 
 
 
@@ -286,7 +288,7 @@ void articulateWheel(int motorID, int direction) {
 
 }
 
-
+//TODO: Rename to driveAllWheels
 void driveAllMotors() {
 
   //Set wheel speeds
@@ -300,6 +302,7 @@ void driveAllMotors() {
 
 }
 
+//TODO: Rename to driveWheel
 void driveMotor(int motorID, int speed) {
 
   if (speed < 0) {
@@ -413,6 +416,7 @@ void loop(){
 
   //We are E-Stopped, don't respond to future commands.
   if (currentStatus == E_STOPPED) {
+    //TODO: This will never happen right now, may want for competition though
     return;
   } 
 
