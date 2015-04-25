@@ -67,6 +67,22 @@ const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND = 4;
 const unsigned char REAR_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
 const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
 
+// Direction indicator. 0 means "correct" (no software flip necessary). 1 means "backwards" (software flip necessary).
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char REAR_LEFT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char REAR_RIGHT_DRIVE_MOTOR_FLIPPED = 1;
+// Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
+// a value of 1 or 5 corresponds to "clockwise".
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char REAR_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_FLIPPED = 0;
+
 // shorthand that will allow us to use the motor ID as an array index to access
 // the relevant constants.
 const unsigned char MOTOR_ADDRESS[12] = {
@@ -95,6 +111,20 @@ const unsigned char MOTOR_COMMAND[12] = {
   MIDDLE_RIGHT_ARTICULATION_MOTOR_COMMAND,
   REAR_LEFT_ARTICULATION_MOTOR_COMMAND,
   REAR_RIGHT_ARTICULATION_MOTOR_COMMAND};
+  const unsigned char MOTOR_FLIPPED[12] = {
+  FRONT_LEFT_DRIVE_MOTOR_FLIPPED,
+  FRONT_RIGHT_DRIVE_MOTOR_FLIPPED,
+  MIDDLE_LEFT_DRIVE_MOTOR_FLIPPED,
+  MIDDLE_RIGHT_DRIVE_MOTOR_FLIPPED,
+  REAR_LEFT_DRIVE_MOTOR_FLIPPED,
+  REAR_RIGHT_DRIVE_MOTOR_FLIPPED,
+  FRONT_LEFT_ARTICULATION_MOTOR_FLIPPED,
+  FRONT_RIGHT_ARTICULATION_MOTOR_FLIPPED,
+  MIDDLE_LEFT_ARTICULATION_MOTOR_FLIPPED,
+  MIDDLE_RIGHT_ARTICULATION_MOTOR_FLIPPED,
+  REAR_LEFT_ARTICULATION_MOTOR_FLIPPED,
+  REAR_RIGHT_ARTICULATION_MOTOR_FLIPPED};
+  
   
   // Motor speed constants
   const unsigned char ARTICULATION_SPEED = 50;
