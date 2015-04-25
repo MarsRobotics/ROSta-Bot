@@ -68,10 +68,6 @@ const int ARTICULATION_DIRECTION_COUNTER_CLOCKWISE = 1;
 //The speed 
 const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 
-//Publisher to print debug statements
-std_msgs::String debugMsg;
-ros::Publisher pubDebug("sabertooth_debugger", &debugMsg);
-
 
 //
 // ROS initialization
@@ -79,6 +75,19 @@ ros::Publisher pubDebug("sabertooth_debugger", &debugMsg);
 
 // This node handle represents this arduino. 
 ros::NodeHandle sabertoothDriverNode;
+
+//
+// ROS Publishers
+// 
+
+//Publisher to present the rotation of each of the articulation joints
+command2ros::ManualCommand wheelStatus;
+ros::Publisher pubwheelStatus("current_rotation", &wheelStatus);// current rotation data for each wheel. 
+// This will publish when the angle is updated.
+
+//Publisher to print debug statements
+std_msgs::String debugMsg;
+ros::Publisher pubDebug("sabertooth_debugger", &debugMsg);
 
 //
 // ROS Subsribers
@@ -132,16 +141,6 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
 
 }
 ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback);
-
-//
-// ROS Publishers
-// 
-
-//Publisher to present the rotation of each of the articulation joints
-command2ros::ManualCommand wheelStatus;
-ros::Publisher pubwheelStatus("current_rotation", &wheelStatus);// current rotation data for each wheel. 
-// This will publish when the angle is updated.
-
 
 void setupWheelStatus() {
   wheelStatus.fl_articulation_angle = 0;
