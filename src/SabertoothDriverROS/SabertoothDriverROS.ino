@@ -1,5 +1,3 @@
-
-
 /* 
  / This is a simple Arduino program that demonstrates the
  / "Packetized Serial" method of using the Sabertooth Motor
@@ -24,388 +22,361 @@
 #include <EncoderRR.h>
 #include "SabertoothDriverROS.h"
 
-std_msgs::String msg;
-command2ros::ManualCommand currentRotationMessage
-ros::Publisher pubResults("testing", &msg);
-ros::Publisher pubCurrentRotation("Current Rotation", &currentRotationMessage)// current rotation data for each wheel. 
-                                                                              // This will publish when the angle is updated.
+
+//The encoders we will use to monitor the angle of each articulation joint
 EncoderFL efl;
 EncoderML eml;
 EncoderFR efr;
 EncoderMR emr;
 EncoderRL erl;
 EncoderRR err;
-// Have we done a software E-stop?
-// By default, we have (this way the robot won't move until we get 
-// valid control input)
-bool emergencyStop = true;
-
-// Is the robot currently rotating?
-// If true, we should override motor drive velocity with rotation velocity.
-bool currentlyRotating = false;
-bool currentlyDriving = false;
-bool currentlyStopped = false;
-
-//Wheel is 0-6
-const int ARTICULATION_OFFSET = 6;
-
-//Articulation joints try to rotate to a certain point +- ARTICULATION_PLAY
-const int ARTICULATION_PLAY = 3;
-
-// How long should we drive for (milliseconds)?
-unsigned long driveTimeMillis = 0;
-//DriveUntil: Used when driving forwards.
-// Should be of the form millis() + driveTimeMillis
-unsigned long driveUntilTime = 0;
 
 
-// By default, the velocity is zero.
-char current_velocity = 0;
-Wheel_status targetWheelStatus[6];
-Wheel_status currentWheelStatus[6];
+//Control logic
 
-void newManualCommandCallback(const command2ros::ManualCommand& nmc)
-{
-  char* error = "received command";
-  msg.data = error;
-  pubResults.publish(&msg);
-  
-  // TODO: Update wheel status info. Determine if we need to rotate.
-  currentlyRotating = currentlyRotating || updateTargetWheelStatus(nmc);
-  if(currentlyRotating)
-  {
-    char* error = "currentlyRotating is TRUE.";
-    msg.data = error;
-    pubResults.publish(&msg);  
-  }
-  else
-  {
-    char* error = "currentlyRotating is FALSE.";
-    msg.data = error;
-    pubResults.publish(&msg);   
-  }
-  driveTimeMillis = (long)(nmc.drive_duration * 1000);
-  emergencyStop = nmc.e_stop;
-  
-  if(emergencyStop == true)
-  {
-    char* error = "Setting E-Stop to TRUE.";
-    msg.data = error;
-    pubResults.publish(&msg);  
-  }
-  else
-  {
-    char* error = "Setting E-Stop to FALSE.";
-    msg.data = error;
-    pubResults.publish(&msg);   
-  }
-  
-}
+//All proccesses killed, don't ever leave this state.
+const int E_STOPPED = -1;
 
+//Not driving any motors
+const int STOPPED = 0;
 
-// Function to update wheel status variables. 
-// Returns TRUE if an orientation changed, FALSE otherwise.
-bool updateTargetWheelStatus(const command2ros::ManualCommand& nmc)
-{
-  bool retval = false;
-  // Check wheel orientations:
-  // Check if the front-left wheel orientation should be changed.
-  if(targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.fl_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.fl_articulation_angle;
-  }
+//Articulating the wheels
+const int ARTICULATING = 1;
 
-  // Check if the middle-left wheel orientation should be changed.
-  if(targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.ml_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.ml_articulation_angle;
-  }
+//Done articulating, drive 
+const int START_DRIVING = 2;
 
-  // Check if the rear-left wheel orientation should be changed.
-  if(targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation != (int)nmc.rl_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)nmc.rl_articulation_angle;
-  }
+//Started articulating, drive
+const int IS_DRIVING = 3;
 
-  // Check if the front-right wheel orientation should be changed.
-  if(targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.fr_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.fr_articulation_angle;
-  }
+//The state the robot is currently in
+int currentStatus = STOPPED;
+long driveStopTime = 0;
 
-  // Check if the middle-right wheel orientation should be changed.
-  if(targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.mr_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.mr_articulation_angle;
-  }
+//
+// Articualtion Constants
+//
 
-  // Check if the rear-right wheel orientation should change.
-  if(targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation != (int)nmc.rr_articulation_angle)
-  {
-    retval = true;
-    targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)nmc.rr_articulation_angle;
-  }
+//We want to get articulation join within this range (degrees) from the target
+const int DELTA_RANGE = 3;
 
-  // Update target drive speeds.
-  targetWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.fl_drive_speed;
-  targetWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.fr_drive_speed;
-  targetWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.ml_drive_speed;
-  targetWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.mr_drive_speed;
-  targetWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].velocity = (long)nmc.rl_drive_speed;
-  targetWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].velocity = (long)nmc.rr_drive_speed;
-  return retval;
+//When we are passing around the direction in which to articulate the wheels, we pass this value
+const int ARTICULATION_DIRECTION_CLOCKWISE = -1;
+const int ARTICULATION_DIRECTION_NONE = 0;
+const int ARTICULATION_DIRECTION_COUNTER_CLOCKWISE = 1;
 
-}
+//The speed 
+const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 
-
-
-// Function to drive the motors as specified in the ROS packet.
-// HANDY VALUES:
-// speed: unsigned char representing the velocity (0-127).
-void continueDriving(){
-  // Short-circuit on EStop!
-  if(emergencyStop)
-  { 
-    if (!currentlyStopped) {
-      char* error = "E-Stopped all motors.";
-      msg.data = error;
-      pubResults.publish(&msg);  
-      
-    }
-    stopAllMotors();
-   
-    // short-circuit
-    return;
-  }
-
-  if(currentlyRotating)
-  {
-    // TODO:Rotate 
-    articulate();
-  }
-  else
-  {
-    // If we still intend to drive, do so.
-    if(millis() < driveUntilTime)
-    {
-      if(!currentlyDriving)
-      {
-        // TODO: Drive
-        driveAllMotors();
-        currentlyDriving = true;
-      }
-    }
-    else
-    {
-      currentlyDriving = false;
-      char* error = "done: Stopped all motors.";
-      msg.data = error;
-      pubResults.publish(&msg);  
-      
-      stopAllMotors();
-    }
-  }
-
-}
-
-bool currentlyMoving[6];
-// A function to articulate the wheels to face the desired orientation.
-void articulate()
-{
-  // For now, only articulate the FRONT LEFT wheel.
-  int delta = 0;
-  int motorIDX;
- 
-  bool stillRotating = false;
-
-  for(motorIDX = 0; motorIDX <= 5; ++motorIDX)
-  {
-    // Which direction should we rotate?
-    delta  = targetWheelStatus[motorIDX].orientation - currentWheelStatus[motorIDX].orientation
-    
-    //If we are close enough to the target then stop moving
-    if(delta < ARTICULATION_PLAY && delta > -ARTICULATION_PLAY)
-    {
-      driveCounterclockwise(0, motorIDX + ARTICULATION_OFFSET);
-      driveCounterclockwise(0, motorIDX);
-
-      char* error = "Stopping motor: X";
-      error[16] = '0'+motorIDX;
-      msg.data = error;
-      pubResults.publish(&msg);
-      // TODO: update this when we have multi-wheel support
-      currentlyMoving[motorIDX] = false;
-    }
-    
-    //Rotate the shortest distance to face
-    else if (((delta > 0) && (delta < 180)) || ((delta + 360) < 180 ))
-    {
-      stillRotating = true;
-      //So we only send one drive command
-      if(!currentlyMoving[motorIDX])
-      {
-        char* error = "Starting motor: X";
-        currentlyStopped = false;
-        error[16] = '0'+motorIDX;
-        msg.data = error;
-        pubResults.publish(&msg);
-        driveCounterclockwise(ARTICULATION_SPEED, motorIDX + ARTICULATION_OFFSET);
-        driveCounterclockwise(ARTICULATION_DRIVE_SPEED, motorIDX);
-        currentlyMoving[motorIDX] = true;
-      }
-
-    }
-    //
-    else
-    {
-      if(!currentlyMoving[motorIDX])
-      {
-        char* error = "Starting motor: X";
-        currentlyStopped = false;
-        error[16] = '0'+motorIDX;
-        msg.data = error;
-        pubResults.publish(&msg);
-        driveClockwise(ARTICULATION_SPEED, motorIDX + ARTICULATION_OFFSET);
-        driveClockwise(ARTICULATION_DRIVE_SPEED, motorIDX);
-        stillRotating = true;
-        currentlyMoving[motorIDX] = true;
-      }
-    }
-  }
-  //Done rotating, drive until we get to a certain time
-  if(!stillRotating)
-  {
-    driveUntilTime = millis() + driveTimeMillis;
-    currentlyRotating = false;
-  }
-  else
-  {
-    currentlyRotating = true;
-  }
-
-}
-
-// A function that tells all motors to stop moving.
-void stopAllMotors()
-{
-  if (!currentlyStopped) {
-    currentlyStopped = true;
-    // send stop-driving commands to all motors
-    for(int i = 0; i < 12; ++i)
-    {
-      driveClockwise(0,i);
-    }
-    char* error = "Stopping all motors.";
-    msg.data = error;
-    pubResults.publish(&msg);  
-  }
-}
-
-// A function to drive all motors at the desired rates.
-void driveAllMotors()
-{
-  // send driving commands to all motors
-  for(int i = 0; i < 6; ++i)
-  {
-    driveClockwise(targetWheelStatus[i].velocity, i);
-  }
-}
-
-// Function to drive a specific motor forward. 
-// Packet format: Address Byte, Command Byte, Value Byte, Checksum.
-void driveClockwise(char speed, char motor){
-  // Build the data packet:
-  // Get the address and motor command ID from a predefined array.
-  unsigned char address = MOTOR_ADDRESS[motor];
-  unsigned char command = MOTOR_COMMAND[motor];
-  unsigned char checksum = (address + command + speed) & 0b01111111;
-  // Write the packet.
-  Serial3.write(address);
-  Serial3.write(command);
-  Serial3.write(speed);
-  Serial3.write(checksum);
-  delayMicroseconds(1000);
-}
-
-// Function to drive a specific motor backwards. 
-// Packet format: Address Byte, Command Byte, Value Byte, Checksum.
-void driveCounterclockwise(char speed, char motor){
-  unsigned char address = MOTOR_ADDRESS[motor];
-  unsigned char command = MOTOR_COMMAND[motor] + 1;
-  unsigned char checksum = (address + command + speed) & 0b01111111;
-  Serial3.write(address);
-  Serial3.write(command);
-  Serial3.write(speed);
-  Serial3.write(checksum);
-  delayMicroseconds(1000);
-}
+//
+// ROS initialization
+//
 
 // This node handle represents this arduino. 
 ros::NodeHandle sabertoothDriverNode;
+
+//
+// ROS Subsribers
+//
+
+//Inbound wheel command
+command2ros::ManualCommand wheelTarget;
+
 // Subscribers for intended drive velocity and direction
-ros::Subscriber<command2ros::ManualCommand> mcSUB("ManualCommand", &newManualCommandCallback );
+void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand)
+{
+
+  //TODO: Do we need to stop the robot at this point, Sherry and Matt H say no
+
+  //Set articulation target values
+  wheelTarget.fl_articulation_angle = newManualCommand.fl_articulation_angle;
+  wheelTarget.ml_articulation_angle = newManualCommand.ml_articulation_angle;
+  wheelTarget.rl_articulation_angle = newManualCommand.rl_articulation_angle;
+
+  wheelTarget.fr_articulation_angle = newManualCommand.fr_articulation_angle;
+  wheelTarget.mr_articulation_angle = newManualCommand.mr_articulation_angle;
+  wheelTarget.rr_articulation_angle = newManualCommand.rr_articulation_angle;
+
+  //Set wheel speeds
+  wheelTarget.fl_drive_speed = newManualCommand.fl_drive_speed;
+  wheelTarget.ml_drive_speed = newManualCommand.ml_drive_speed;
+  wheelTarget.rl_drive_speed = newManualCommand.rl_drive_speed;
+
+  wheelTarget.fr_drive_speed = newManualCommand.fr_drive_speed;
+  wheelTarget.mr_drive_speed = newManualCommand.mr_drive_speed;
+  wheelTarget.rr_drive_speed = newManualCommand.rr_drive_speed;
+
+  //Set E-Stop Command
+  wheelTarget.e_stop = newManualCommand.e_stop;
+  if (wheelTarget.e_stop == true) {
+    //TODO: Make this E_STOPPED for final product
+    currentStatus = STOPPED;
+    stopAllMotors(false);
+  }
+
+
+  //How long we will be driving from (in seconds)
+  wheelTarget.drive_duration = newManualCommand.drive_duration;
+}
+ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback );
+
+//
+// ROS Publishers
+// 
+
+//Publisher to present the rotation of each of the articulation joints
+command2ros::ManualCommand wheelStatus;
+ros::Publisher pubwheelStatus("current_rotation", &wheelStatus);// current rotation data for each wheel. 
+                                                                              // This will publish when the angle is updated.
+//Publisher to print debug statements
+std_msgs::String debugMsg;
+ros::Publisher pubDebug("sabertooth_debugger", &debugMsg);
+
+
+
+
+
+
+
+void setupWheelStatus() {
+  wheelStatus.fl_articulation_angle = 0;
+  wheelStatus.fr_articulation_angle = 180;
+  wheelStatus.ml_articulation_angle = 0;
+  wheelStatus.mr_articulation_angle = 180;
+  wheelStatus.rl_articulation_angle = 0;
+  wheelStatus.rr_articulation_angle = 180;
+  
+  wheelStatus.fl_drive_speed = 0;
+  wheelStatus.fr_drive_speed = 0;
+  wheelStatus.ml_drive_speed = 0;
+  wheelStatus.mr_drive_speed = 0;
+  wheelStatus.rl_drive_speed = 0;
+  wheelStatus.rr_drive_speed = 0;
+}
 
 /**
-* Gets the last known position of each articulation joint, and updates acordingly.
-*/
-void updateArticulationValues()
-{
-  int temp = EncoderFL::getPosition();
-  if (temp < 0)
-  {
-    temp += 400;
-  }
-  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.FRONT_LEFT_articulation_angle = currentWheelStatus[FRONT_LIGHT_DRIVE_MOTOR_ID].orientation;
+ * Checks the current angle of each of the articulation joints against their target value
+ *    if the difference betwen any of them exceed the range given by DELTA_RANGE then we need 
+ *    to articulate "return true"
+ */
+bool needsToArticulate() {
 
-  temp = EncoderML::getPosition();
-  if (temp < 0)
-  {
-    temp += 400;
-  }
-  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.ml_articulation_angle = currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation;
+  int delta;
 
-  temp = EncoderRL::getPosition();
-  if (temp < 0)
-  {
-    temp += 400;
-  }
-  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.rl_articulation_angle = currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation;
+  //Check if the difference between target and actual articulation exceeds our given range
+  delta = wheelStatus.fl_articulation_angle - wheelTarget.fl_articulation_angle;  //FL
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
 
-  temp = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
-  if (temp < 0)
-  {
-    temp += 400;
-  }
-  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.fr_articulation_angle = currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation;
+  delta = wheelStatus.ml_articulation_angle - wheelTarget.ml_articulation_angle;  //ML
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
 
-  temp = EncoderMR::getPosition() - 200;
-  if (temp < 0)
-  {
-    temp += 400;
-  }
-  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.mr_articulation_angle = currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation;
+  delta = wheelStatus.rl_articulation_angle - wheelTarget.rl_articulation_angle;  //RL
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
 
-  temp = EncoderRR::getPosition() - 200;
-  if (temp < 0)
-  {
-    temp += 400;
-  }
+  delta = wheelStatus.fr_articulation_angle - wheelTarget.fr_articulation_angle;  //FR
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
 
-  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = (int)((temp * 9L) / 10L);
-  currentRotationMessage.rr_articulation_angle = currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation;
+  delta = wheelStatus.mr_articulation_angle - wheelTarget.mr_articulation_angle;  //MR
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
 
-  pubCurrentRotation.publish(&currentRotationMessage);
+  delta = wheelStatus.rr_articulation_angle - wheelTarget.rr_articulation_angle;  //RR
+  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { return true; }
+
+  return false;
 }
+
+void articulateAllWheels() {
+
+  int delta;
+  int direction;
+
+  direction = getArticulationDirection(wheelStatus.fl_articulation_angle, wheelTarget.fl_articulation_angle); //FL
+  articulateWheel(FRONT_LEFT_DRIVE_MOTOR_ID, direction);
+
+  direction = getArticulationDirection(wheelStatus.ml_articulation_angle, wheelTarget.ml_articulation_angle); //ML
+  articulateWheel(MIDDLE_LEFT_DRIVE_MOTOR_ID, direction);
+
+  direction = getArticulationDirection(wheelStatus.rl_articulation_angle, wheelTarget.rl_articulation_angle); //RL
+  articulateWheel(REAR_LEFT_DRIVE_MOTOR_ID, direction);
+
+  direction = getArticulationDirection(wheelStatus.fr_articulation_angle, wheelTarget.fr_articulation_angle); //FR
+  articulateWheel(FRONT_RIGHT_DRIVE_MOTOR_ID, direction);
+
+  direction = getArticulationDirection(wheelStatus.mr_articulation_angle, wheelTarget.mr_articulation_angle); //MR
+  articulateWheel(MIDDLE_RIGHT_DRIVE_MOTOR_ID, direction);
+
+  direction = getArticulationDirection(wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
+  articulateWheel(REAR_RIGHT_DRIVE_MOTOR_ID, direction);
+
+}
+
+/**
+ *
+ */
+int getArticulationDirection(int from, int to) {
+
+  int delta = from-to;
+  if (delta > -DELTA_RANGE && delta < DELTA_RANGE) {
+    return ARTICULATION_DIRECTION_NONE;
+  }
+
+  // Calculations are made by "normalizing" the data so that we are always starting from "0" 
+  // and heading towards the target
+
+  // If the current articulation angle is between 0 and 180, then we want to shift the 
+  // whole frame of reference clockwise
+
+  //Shift "to" and "from" so that "to" is the angle that we need to turn and "from" is 0
+  if(from > 0 && from <= 180){
+
+    // shift "to" by however much "from" shifted (counter clockwise)
+    to -= from;
+    if(to < 0){
+      to += 360;
+    }
+
+
+    // shift "from" to 0 degrees
+    from = 0;
+  }
+  else{
+    delta = 360 - from;
+
+    // shift "from" to 0 degrees
+    from = 0;
+
+    // shift "to" by however much "from" shifted (clockwise)
+    to += delta;
+    if(to > 360){
+      to -= 360;
+    }
+  }
+
+
+  //Now we compare the two distances and move in the diection that is fastest
+  int counterClockwiseDistance = to;
+  int clockwiseDistance = 360 - to;
+
+  if(counterClockwiseDistance > clockwiseDistance){
+    return ARTICULATION_DIRECTION_CLOCKWISE;
+  }
+  else{
+    return ARTICULATION_DIRECTION_COUNTER_CLOCKWISE;
+  }
+}
+
+/**
+ *
+ */
+void articulateWheel(int motorID, int direction) {
+
+  int articulationSpeed = 50*direction*ARTICULATION_DRIVE_SPEED;
+  int wheelSpeed = 50*direction;
+
+  //TODO: Make a constant
+  int articulationID = motorID + 6;
+
+  if (direction == ARTICULATION_DIRECTION_CLOCKWISE) {
+    driveClockwise(articulationID, articulationSpeed);
+    driveClockwise(motorID, wheelSpeed);
+  } else if (direction == ARTICULATION_DIRECTION_COUNTER_CLOCKWISE) {
+    driveCounterclockwise(articulationID, articulationSpeed);
+    driveCounterclockwise(motorID, wheelSpeed);
+  }
+
+}
+
+
+void driveAllMotors() {
+
+  //Set wheel speeds
+  driveMotor(FRONT_LEFT_DRIVE_MOTOR_ID, wheelTarget.fl_drive_speed*-1);
+  driveMotor(MIDDLE_LEFT_DRIVE_MOTOR_ID, wheelTarget.ml_drive_speed*-1);
+  driveMotor(REAR_LEFT_DRIVE_MOTOR_ID, wheelTarget.rl_drive_speed*-1);
+  
+  driveMotor(FRONT_RIGHT_DRIVE_MOTOR_ID, wheelTarget.fr_drive_speed);
+  driveMotor(MIDDLE_RIGHT_DRIVE_MOTOR_ID, wheelTarget.mr_drive_speed);
+  driveMotor(REAR_RIGHT_DRIVE_MOTOR_ID, wheelTarget.rr_drive_speed);
+
+}
+
+void driveMotor(int motorID, int speed) {
+
+  if (speed < 0) {
+    speed = speed * -50;
+    driveClockwise(motorID, speed);
+  } else {
+    speed = speed * 50;
+    driveCounterclockwise(motorID, speed);
+  }
+
+}
+
+/**
+ * Stops all the motors (Articulation and Wheels) and chages the current state to reflect the stop
+ *
+ * Parameters:
+ *  EStop - Weather or not this is an E-Stop or a normal end of command stop
+ */
+void stopAllMotors(bool EStop) {
+
+  if (EStop == true) {
+    currentStatus = E_STOPPED;
+  } else {
+    currentStatus = STOPPED;
+  }
+
+  //Stop all motors 
+  const int speed = 0;
+  for(int motorID = 0; motorID <= 11; ++motorID) {
+    driveClockwise(motorID, speed);
+  }
+  
+}
+
+/**
+ * Drives a given motor at a given speed in a clockwise direction
+ *
+ * Paramteters:
+ *  motorID - the id of the motor to spin (0-11)
+ *  speed - the speed at which to spin the motor.
+ */
+void driveClockwise(int motorID, int speed){
+  // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
+  // Build the data packet:
+  // Get the address and motor command ID from a predefined array.
+  unsigned char address = MOTOR_ADDRESS[motorID];
+  unsigned char command = MOTOR_COMMAND[motorID];
+  unsigned char checksum = (address + command + ((char)speed)) & 0b01111111;
+  // Write the packet.
+  Serial3.write(address);
+  Serial3.write(command);
+  Serial3.write(((char)speed));
+  Serial3.write(checksum);
+  //TODO: Move the delay time to a constant
+  delayMicroseconds(1000);
+}
+
+/**
+ * Drives a given motor at a given speed in a clockwise direction
+ *
+ * Paramteters:
+ *  motorID - the id of the motor to spin (0-11)
+ *  speed - the speed at which to spin the motor.
+ */
+ void driveCounterclockwise(char motorID, char speed){ 
+  // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
+  unsigned char address = MOTOR_ADDRESS[motorID];
+  unsigned char command = MOTOR_COMMAND[motorID] + 1;
+  unsigned char checksum = (address + command + speed) & 0b01111111;
+  Serial3.write(address);
+  Serial3.write(command);
+  Serial3.write(speed);
+  Serial3.write(checksum);
+  //TODO: Move the delay time to a constant
+  delayMicroseconds(1000);
+}
+
 
 /**
 * Is called on starting the arduino.
@@ -413,7 +384,7 @@ void updateArticulationValues()
 */
 void setup(){
 
-  // Communicate with the computer
+  // Setup the encoders
   EncoderFL::setupEncoderFL();
   EncoderML::setupEncoderML();
   EncoderRL::setupEncoderRL();
@@ -421,57 +392,77 @@ void setup(){
   EncoderMR::setupEncoderMR();
   EncoderRR::setupEncoderRR();
 
+  //Initialize the ROS Node
   sabertoothDriverNode.initNode();
-  sabertoothDriverNode.subscribe(mcSUB);
+  sabertoothDriverNode.subscribe(commandSubscriber);
+  sabertoothDriverNode.advertise(pubwheelStatus);
+  sabertoothDriverNode.advertise(pubDebug);
 
-  // Communicate with the Sabertooth
+  // Open communication with Saberteeth
   Serial3.begin(9600);
 
   // Initialize the message
-  currentRotationMessage.fl_articulation_angle = 0;
-  currentRotationMessage.fr_articulation_angle = 180;
-  currentRotationMessage.ml_articulation_angle = 0;
-  currentRotationMessage.mr_articulation_angle = 180;
-  currentRotationMessage.rl_articulation_angle = 0;
-  currentRotationMessage.rr_articulation_angle = 180;
-  
-  currentRotationMessage.fl_drive_speed = 0;
-  currentRotationMessage.fr_drive_speed = 0;
-  currentRotationMessage.ml_drive_speed = 0;
-  currentRotationMessage.mr_drive_speed = 0;
-  currentRotationMessage.rl_drive_speed = 0;
-  currentRotationMessage.rr_drive_speed = 0;
+  setupWheelStatus();
 
-  // Initialize current wheel status: Assume we're in "closed" position
-  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;     //.fl_articulation_angle = 0.0;
-  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0;   //.fr_articulation_angle = 180.0;
-  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;//.ml_articulation_angle = 0.0;
-  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0;//.mr_articulation_angle = 180.0;
-  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].orientation = 0.0;//.rl_articulation_angle = 0.0;
-  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].orientation = 180.0; //.rr_articulation_angle = 180.0;
-  
-  currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.fl_drive_speed = 0.0;
-  currentWheelStatus[FRONT_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.fr_drive_speed = 0.0;
-  currentWheelStatus[MIDDLE_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.ml_drive_speed = 0.0;
-  currentWheelStatus[MIDDLE_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.mr_drive_speed = 0.0;
-  currentWheelStatus[REAR_LEFT_DRIVE_MOTOR_ID].velocity = 0.0;//.rl_drive_speed = 0.0;
-  currentWheelStatus[REAR_RIGHT_DRIVE_MOTOR_ID].velocity = 0.0;//.rr_drive_speed = 0.0;
-
-  // Publish our stuff
-  sabertoothDriverNode.advertise(pubResults);
-  sabertoothDriverNode.advertise(pubCurrentRotation);
 }
 
 // This program does whatever ROS directs it to do.
 // So far, it drives the robot forwards and backwards.
 void loop(){
-  delayMicroseconds(100000);
+
+
+  //We are E-Stopped, don't respond to future commands.
+  if (currentStatus == E_STOPPED) {
+    return;
+  } 
+
+  //Currently stopped, don't do anything
+  if (currentStatus == STOPPED) {
+    //Do Nothing
+  }
+
+  if (currentStatus == ARTICULATING) {
+    if (needsToArticulate() == true) {
+       articulateAllWheels();
+    } else {
+       currentStatus = START_DRIVING;
+    }
+  }
+
+  if (currentStatus == START_DRIVING) {
+    //TODO: Check with MEs about possibility of losing correct articulation (by going over an obstacle or something)
+
+    //Check if we need to articulate
+    // if (needsToArticulate()) {
+    //   //Set state to articulate and don't drive
+    //   currentStatus = ARTICULATING;
+    //   return;
+    // }
+
+
+    //Set stop drive time
+    driveStopTime = millis() + wheelTarget.drive_duration*1000;
+
+    //Send drive start command
+    driveAllMotors();
+    
+    currentStatus = IS_DRIVING;
+  }
+
+  if (currentStatus == IS_DRIVING) {
+
+    if (millis() >= driveStopTime) {
+      stopAllMotors(false);
+    }
+
+
+  }
+
+  //Sync with ROS
   sabertoothDriverNode.spinOnce(); // Check for subscriber update/update timestamp
-  updateArticulationValues();
-  continueDriving();
-  // TODO: Delete this?
-  //  msg.data = (long)currentWheelStatus[FRONT_LEFT_DRIVE_MOTOR_ID].orientation;
-  //  pubResults.publish(&msg);
+
+  //Delay so we don't overload any serial buffers
+  delayMicroseconds(100000);
 
 }
 
