@@ -70,7 +70,8 @@ const int ENCODER_POSITIONS = 400;
 
 //The speed 
 const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
-
+// This corresponds to the "maximum speed" available to the robot.
+const int MAX_DRIVE_SPEED = 30;
 bool motorInMotion[12];
 
 //
@@ -302,8 +303,8 @@ int getArticulationDirection(int motorID, int from, int to) {
  */
 void articulateWheel(int motorID, int direction) {
 
-  int articulationSpeed = 50*ARTICULATION_DRIVE_SPEED;
-  int wheelSpeed = 50;
+  int articulationSpeed = 30*ARTICULATION_DRIVE_SPEED;
+  int wheelSpeed = 30;
 
   //TODO: Make a constant
   int articulationID = motorID + 6;
