@@ -511,8 +511,6 @@ void delaySeconds(long n){
 void setup(){
   pinMode(13, OUTPUT);
 
-  // Open communication with Saberteeth
-  Serial3.begin(9600);
 
   //unitTest();
 
@@ -529,6 +527,10 @@ void setup(){
   sabertoothDriverNode.subscribe(commandSubscriber);
   sabertoothDriverNode.advertise(pubwheelStatus);
   sabertoothDriverNode.advertise(pubDebug);
+
+
+  // Open communication with Saberteeth
+  Serial3.begin(9600);
 
   // Initialize the message
   setupWheelStatus();
