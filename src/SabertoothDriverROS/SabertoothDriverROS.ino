@@ -292,8 +292,8 @@ int getArticulationDirection(int from, int to) {
  */
 void articulateWheel(int motorID, int direction) {
 
-  int articulationSpeed = 50*direction*ARTICULATION_DRIVE_SPEED;
-  int wheelSpeed = 50*direction;
+  int articulationSpeed = 50*ARTICULATION_DRIVE_SPEED;
+  int wheelSpeed = 50;
 
   //TODO: Make a constant
   int articulationID = motorID + 6;
