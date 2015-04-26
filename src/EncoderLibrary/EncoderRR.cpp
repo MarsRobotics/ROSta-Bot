@@ -61,13 +61,13 @@ void EncoderRR::onEncoderRRInterrupt()
   if (a == b )
   {
     // b is leading a (counter-clockwise)
-    --(EncoderRR::EncoderRRPosition);
+    ++(EncoderRR::EncoderRRPosition);
     EncoderRR::currentDirection = COUNTER_CLOCKWISE;
   }
   else
   {
     // a is leading b (clockwise)
-    ++(EncoderRR::EncoderRRPosition);
+    --(EncoderRR::EncoderRRPosition);
     EncoderRR::currentDirection = CLOCKWISE;
   }
 

@@ -61,13 +61,13 @@ void EncoderML::onEncoderMLInterrupt()
   if (a == b )
   {
     // b is leading a (counter-clockwise)
-    --(EncoderML::EncoderMLPosition);
+    ++(EncoderML::EncoderMLPosition);
     EncoderML::currentDirection = COUNTER_CLOCKWISE;
   }
   else
   {
     // a is leading b (clockwise)
-    ++(EncoderML::EncoderMLPosition);
+    --(EncoderML::EncoderMLPosition);
     EncoderML::currentDirection = CLOCKWISE;
   }
 
