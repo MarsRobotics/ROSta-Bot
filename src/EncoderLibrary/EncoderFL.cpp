@@ -61,13 +61,13 @@ void EncoderFL::onEncoderFLInterrupt()
   if (a == b )
   {
     // b is leading a (counter-clockwise)
-    --(EncoderFL::EncoderFLPosition);
+    ++(EncoderFL::EncoderFLPosition);
     EncoderFL::currentDirection = COUNTER_CLOCKWISE;
   }
   else
   {
     // a is leading b (clockwise)
-    ++(EncoderFL::EncoderFLPosition);
+    --(EncoderFL::EncoderFLPosition);
     EncoderFL::currentDirection = CLOCKWISE;
   }
 
