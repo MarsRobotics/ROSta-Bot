@@ -231,7 +231,10 @@ void articulateAllWheels() {
 int getArticulationDirection(int from, int to) {
 
   int delta = from-to;
-  if (delta > -DELTA_RANGE && delta < DELTA_RANGE) {
+  if (delta >= -DELTA_RANGE && delta <= DELTA_RANGE) {
+    char msg[] = "Determined direction: NONE...";
+    debugMsg.data = msg;
+    pubDebug.publish(&debugMsg);
     return ARTICULATION_DIRECTION_NONE;
   }
 
@@ -242,14 +245,13 @@ int getArticulationDirection(int from, int to) {
   // whole frame of reference clockwise
 
   //Shift "to" and "from" so that "to" is the angle that we need to turn and "from" is 0
-  if(from > 0 && from <= 180){
+  if(from >= 0 && from <= 180){
 
     // shift "to" by however much "from" shifted (counter clockwise)
     to -= from;
     if(to < 0){
       to += 360;
     }
-
 
     // shift "from" to 0 degrees
     from = 0;
@@ -273,6 +275,9 @@ int getArticulationDirection(int from, int to) {
   int clockwiseDistance = 360 - to;
 
   if(counterClockwiseDistance > clockwiseDistance){
+    char msg[] = "Determined direction: CLOCKWISE!";
+    debugMsg.data = msg;
+    pubDebug.publish(&debugMsg);
     return ARTICULATION_DIRECTION_CLOCKWISE;
   }
   else{
