@@ -65,6 +65,8 @@ const int ARTICULATION_DIRECTION_CLOCKWISE = -1;
 const int ARTICULATION_DIRECTION_NONE = 0;
 const int ARTICULATION_DIRECTION_COUNTER_CLOCKWISE = 1;
 
+const int ENCODER_POSITIONS = 400;
+
 //The speed 
 const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 
@@ -419,48 +421,48 @@ void driveCounterclockwise(char motorID, char speed){
 */
 void updateArticulationValues()
 {
-  int temp = EncoderFL::getPosition();
-  if (temp < 0)
+  int encoderPostition = EncoderFL::getPosition();
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
-  wheelStatus.fl_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.fl_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  temp = EncoderML::getPosition();
-  if (temp < 0)
+  encoderPostition = EncoderML::getPosition();
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
-  wheelStatus.ml_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.ml_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  temp = EncoderRL::getPosition();
-  if (temp < 0)
+  encoderPostition = EncoderRL::getPosition();
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
-  wheelStatus.rl_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.rl_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  temp = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
-  if (temp < 0)
+  encoderPostition = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
-  wheelStatus.fr_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.fr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  temp = EncoderMR::getPosition() - 200;
-  if (temp < 0)
+  encoderPostition = EncoderMR::getPosition() - 200;
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
-  wheelStatus.mr_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.mr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  temp = EncoderRR::getPosition() - 200;
-  if (temp < 0)
+  encoderPostition = EncoderRR::getPosition() - 200;
+  if (encoderPostition < 0)
   {
-    temp += 400;
+    encoderPostition += ENCODER_POSITIONS;
   }
 
-  wheelStatus.rr_articulation_angle = (int)((temp * 9L) / 10L);
+  wheelStatus.rr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
   pubwheelStatus.publish(&wheelStatus);
 }
