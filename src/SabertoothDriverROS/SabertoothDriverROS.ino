@@ -58,7 +58,8 @@ long driveStopTime = 0;
 //
 
 //We want to get articulation join within this range (degrees) from the target
-const int DELTA_RANGE = 3;
+const int DELTA_START_RANGE = 8;
+const int DELTA_STOP_RANGE = 3;
 
 //When we are passing around the direction in which to articulate the wheels, we pass this value
 const int ARTICULATION_DIRECTION_CLOCKWISE = -1;
@@ -70,6 +71,7 @@ const int ENCODER_POSITIONS = 400;
 //The speed 
 const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 
+bool motorInMotion[12];
 
 //
 // ROS initialization
@@ -168,35 +170,41 @@ void setupWheelStatus() {
 bool needsToArticulate() {
 
   int delta;
-
+  int moveRange;
   //Check if the difference between target and actual articulation exceeds our given range
   delta = wheelStatus.fl_articulation_angle - wheelTarget.fl_articulation_angle;  //FL
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[FRONT_LEFT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
 
   delta = wheelStatus.ml_articulation_angle - wheelTarget.ml_articulation_angle;  //ML
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[MIDDLE_LEFT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
 
   delta = wheelStatus.rl_articulation_angle - wheelTarget.rl_articulation_angle;  //RL
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[REAR_LEFT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
 
   delta = wheelStatus.fr_articulation_angle - wheelTarget.fr_articulation_angle;  //FR
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[FRONT_RIGHT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
 
   delta = wheelStatus.mr_articulation_angle - wheelTarget.mr_articulation_angle;  //MR
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[MIDDLE_RIGHT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
-
+  
   delta = wheelStatus.rr_articulation_angle - wheelTarget.rr_articulation_angle;  //RR
-  if (delta < -DELTA_RANGE || delta > DELTA_RANGE) { 
+  moveRange = (motorInMotion[REAR_RIGHT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
 
@@ -207,22 +215,22 @@ void articulateAllWheels() {
   int delta;
   int direction;
 
-  direction = getArticulationDirection(wheelStatus.fl_articulation_angle, wheelTarget.fl_articulation_angle); //FL
+  direction = getArticulationDirection(FRONT_LEFT_DRIVE_MOTOR_ID, wheelStatus.fl_articulation_angle, wheelTarget.fl_articulation_angle); //FL
   articulateWheel(FRONT_LEFT_DRIVE_MOTOR_ID, direction);
 
-  direction = getArticulationDirection(wheelStatus.ml_articulation_angle, wheelTarget.ml_articulation_angle); //ML
+  direction = getArticulationDirection(MIDDLE_LEFT_DRIVE_MOTOR_ID, wheelStatus.ml_articulation_angle, wheelTarget.ml_articulation_angle); //ML
   articulateWheel(MIDDLE_LEFT_DRIVE_MOTOR_ID, direction);
 
-  direction = getArticulationDirection(wheelStatus.rl_articulation_angle, wheelTarget.rl_articulation_angle); //RL
+  direction = getArticulationDirection(REAR_LEFT_DRIVE_MOTOR_ID, wheelStatus.rl_articulation_angle, wheelTarget.rl_articulation_angle); //RL
   articulateWheel(REAR_LEFT_DRIVE_MOTOR_ID, direction);
 
-  direction = getArticulationDirection(wheelStatus.fr_articulation_angle, wheelTarget.fr_articulation_angle); //FR
+  direction = getArticulationDirection(FRONT_RIGHT_DRIVE_MOTOR_ID, wheelStatus.fr_articulation_angle, wheelTarget.fr_articulation_angle); //FR
   articulateWheel(FRONT_RIGHT_DRIVE_MOTOR_ID, direction);
 
-  direction = getArticulationDirection(wheelStatus.mr_articulation_angle, wheelTarget.mr_articulation_angle); //MR
+  direction = getArticulationDirection(MIDDLE_RIGHT_DRIVE_MOTOR_ID, wheelStatus.mr_articulation_angle, wheelTarget.mr_articulation_angle); //MR
   articulateWheel(MIDDLE_RIGHT_DRIVE_MOTOR_ID, direction);
 
-  direction = getArticulationDirection(wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
+  direction = getArticulationDirection(REAR_RIGHT_DRIVE_MOTOR_ID, wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
   articulateWheel(REAR_RIGHT_DRIVE_MOTOR_ID, direction);
 
 }
@@ -230,10 +238,12 @@ void articulateAllWheels() {
 /**
  *
  */
-int getArticulationDirection(int from, int to) {
+int getArticulationDirection(int motorID, int from, int to) {
 
   int delta = from-to;
-  if (delta >= -DELTA_RANGE && delta <= DELTA_RANGE) {
+  
+  int moveRange = (motorInMotion[motorID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
+  if (delta >= -moveRange && delta <= moveRange) {
     char msg[] = "Determined direction: NONE...";
     debugMsg.data = msg;
     pubDebug.publish(&debugMsg);
@@ -375,6 +385,15 @@ void stopAllMotors(bool EStop) {
  *  speed - the speed at which to spin the motor.
  */
 void driveClockwise(int motorID, int speed){ 
+  if(0 == speed)
+  {
+   motorInMotion[motorID] = false; 
+  }
+  else
+  {
+    motorInMotion[motorID] = true;
+  }
+  
   // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
   // Build the data packet:
   // Get the address and motor command ID from a predefined array.
@@ -404,6 +423,14 @@ void driveClockwise(int motorID, int speed){
  *  speed - the speed at which to spin the motor.
  */
 void driveCounterclockwise(char motorID, char speed){ 
+  if(0 == speed)
+  {
+   motorInMotion[motorID] = false; 
+  }
+  else
+  {
+    motorInMotion[motorID] = true;
+  }
   // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
   unsigned char address = MOTOR_ADDRESS[motorID];
   unsigned char command = MOTOR_COMMAND[motorID] + 1;
@@ -570,6 +597,11 @@ void delaySeconds(long n){
  */
 void setup(){
   pinMode(13, OUTPUT);
+  // To start, no motor is moving.
+  for(int i = 0; i < 12; ++i)
+  {
+   motorInMotion[i] = false; 
+  }
 
   // Setup the encoders
   EncoderFL::setupEncoderFL();
