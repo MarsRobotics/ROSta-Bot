@@ -328,7 +328,7 @@ void driveMotor(int motorID, int speed) {
 
   if (speed < 0) {
     speed = speed * -50;
-    //driveClockwise(motorID, speed);
+    driveClockwise(motorID, speed);
   } 
   else {
     speed = speed * 50;
@@ -412,6 +412,57 @@ void driveCounterclockwise(char motorID, char speed){
   Serial3.write(checksum);
   //TODO: Move the delay time to a constant
   delayMicroseconds(1000);
+}
+
+/**
+* Gets the last known position of each articulation joint, and updates acordingly.
+*/
+void updateArticulationValues()
+{
+  int temp = EncoderFL::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  wheelStatus.fl_articulation_angle = (int)((temp * 9L) / 10L);
+
+  temp = EncoderML::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  wheelStatus.ml_articulation_angle = (int)((temp * 9L) / 10L);
+
+  temp = EncoderRL::getPosition();
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  wheelStatus.rl_articulation_angle = (int)((temp * 9L) / 10L);
+
+  temp = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  wheelStatus.fr_articulation_angle = (int)((temp * 9L) / 10L);
+
+  temp = EncoderMR::getPosition() - 200;
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+  wheelStatus.mr_articulation_angle = (int)((temp * 9L) / 10L);
+
+  temp = EncoderRR::getPosition() - 200;
+  if (temp < 0)
+  {
+    temp += 400;
+  }
+
+  wheelStatus.rr_articulation_angle = (int)((temp * 9L) / 10L);
+
+  pubwheelStatus.publish(&wheelStatus);
 }
 
 void unitTest(){
@@ -504,15 +555,14 @@ void delaySeconds(long n){
   }
 }
 
+
+
 /**
  * Is called on starting the arduino.
  * 
  */
 void setup(){
   pinMode(13, OUTPUT);
-
-
-  //unitTest();
 
   // Setup the encoders
   EncoderFL::setupEncoderFL();
@@ -531,6 +581,8 @@ void setup(){
 
   // Open communication with Saberteeth
   Serial3.begin(9600);
+  //unitTest();
+
 
   // Initialize the message
   setupWheelStatus();
@@ -539,6 +591,8 @@ void setup(){
 // This program does whatever ROS directs it to do.
 // So far, it drives the robot forwards and backwards.
 void loop(){
+  updateArticulationValues(); 
+  
   //We are E-Stopped, don't respond to future commands.
   if (currentStatus == E_STOPPED) {
     //TODO: This will never happen right now, may want for competition though
@@ -551,9 +605,6 @@ void loop(){
   }
 
   if (currentStatus == ARTICULATING) {
-    char msg[] = "articulating";
-    debugMsg.data = msg;
-    pubDebug.publish(&debugMsg);
     
     if (needsToArticulate() == true) {
       articulateAllWheels();
@@ -564,9 +615,7 @@ void loop(){
   }
 
   if (currentStatus == START_DRIVING) {
-    char msg[] = "driving";
-    debugMsg.data = msg;
-    pubDebug.publish(&debugMsg);
+   
     //TODO: Check with MEs about possibility of losing correct articulation (by going over an obstacle or something)
 
     //Check if we need to articulate
