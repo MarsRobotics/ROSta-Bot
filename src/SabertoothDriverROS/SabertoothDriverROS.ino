@@ -105,8 +105,8 @@ command2ros::ManualCommand wheelTarget;
 void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand)
 {      
   //TODO: Do we need to stop the robot at this point, Sherry and Matt H say no
-  digitalWrite(13, HIGH);   // turn the LED on (HIGH is the voltage level)
-
+  print("start cb");
+    
   //Set articulation target values
   wheelTarget.fl_articulation_angle = newManualCommand.fl_articulation_angle;
   wheelTarget.ml_articulation_angle = newManualCommand.ml_articulation_angle;
@@ -146,6 +146,12 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
 
 }
 ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback);
+
+// Print error message to "sabertooth_debugger" topic
+void print(char* errorMsg){
+  debugMsg.data = errorMsg;
+  pubDebug.publish(&debugMsg);
+}
 
 void setupWheelStatus() {
   wheelStatus.fl_articulation_angle = 0;
@@ -233,7 +239,6 @@ void articulateAllWheels() {
 
   direction = getArticulationDirection(REAR_RIGHT_DRIVE_MOTOR_ID, wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
   articulateWheel(REAR_RIGHT_DRIVE_MOTOR_ID, direction);
-
 }
 
 /**
@@ -245,9 +250,6 @@ int getArticulationDirection(int motorID, int from, int to) {
   
   int moveRange = (motorInMotion[motorID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
   if (delta >= -moveRange && delta <= moveRange) {
-    char msg[] = "Determined direction: NONE...";
-    debugMsg.data = msg;
-    pubDebug.publish(&debugMsg);
     return ARTICULATION_DIRECTION_NONE;
   }
 
@@ -282,15 +284,11 @@ int getArticulationDirection(int motorID, int from, int to) {
     }
   }
 
-
   //Now we compare the two distances and move in the diection that is fastest
   int counterClockwiseDistance = to;
   int clockwiseDistance = 360 - to;
 
   if(counterClockwiseDistance > clockwiseDistance){
-    char msg[] = "Determined direction: CLOCKWISE!";
-    debugMsg.data = msg;
-    pubDebug.publish(&debugMsg);
     return ARTICULATION_DIRECTION_CLOCKWISE;
   }
   else{
@@ -317,14 +315,10 @@ void articulateWheel(int motorID, int direction) {
     driveCounterclockwise(articulationID, articulationSpeed);
     driveCounterclockwise(motorID, wheelSpeed);
   }
-  //wheelStatus.ml_articulation_angle = wheelTarget.ml_articulation_angle;
-  //wheelStatus.rl_articulation_angle = wheelTarget.rl_articulation_angle;
-  //wheelStatus.fl_articulation_angle = wheelTarget.fl_articulation_angle;
-  //wheelStatus.mr_articulation_angle = wheelTarget.mr_articulation_angle;
-  //wheelStatus.rr_articulation_angle = wheelTarget.rr_articulation_angle;
-  //wheelStatus.fr_articulation_angle = wheelTarget.rr_articulation_angle;
-
-
+  else if(direction == ARTICULATION_DIRECTION_NONE){
+    driveCounterclockwise(articulationID, 0);
+    driveCounterclockwise(motorID, 0);
+  }
 }
 
 //TODO: Rename to driveAllWheels
@@ -345,11 +339,11 @@ void driveAllMotors() {
 void driveMotor(int motorID, int speed) {
 
   if (speed < 0) {
-    speed = speed * -50;
+    speed = speed * -1;
     driveClockwise(motorID, speed);
   } 
   else {
-    speed = speed * 50;
+    speed = speed;
     driveCounterclockwise(motorID, speed);
   }
 
@@ -454,6 +448,16 @@ void driveCounterclockwise(char motorID, char speed){
 */
 void updateArticulationValues()
 {
+  /*
+  // Code for command line testing purposes
+  wheelStatus.ml_articulation_angle = wheelTarget.ml_articulation_angle;
+  wheelStatus.rl_articulation_angle = wheelTarget.rl_articulation_angle;
+  wheelStatus.fl_articulation_angle = wheelTarget.fl_articulation_angle;
+  wheelStatus.mr_articulation_angle = (int)wheelTarget.mr_articulation_angle;
+  wheelStatus.rr_articulation_angle = (int)wheelTarget.rr_articulation_angle;
+  wheelStatus.fr_articulation_angle = (int)wheelTarget.fr_articulation_angle;
+  */
+  
   int encoderPostition = EncoderFL::getPosition();
   if (encoderPostition < 0)
   {
@@ -496,8 +500,6 @@ void updateArticulationValues()
   }
 
   wheelStatus.rr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
-
-  pubwheelStatus.publish(&wheelStatus);
 }
 
 void unitTest(){
@@ -597,7 +599,6 @@ void delaySeconds(long n){
  * 
  */
 void setup(){
-  pinMode(13, OUTPUT);
   // To start, no motor is moving.
   for(int i = 0; i < 12; ++i)
   {
@@ -620,7 +621,9 @@ void setup(){
 
 
   // Open communication with Saberteeth
-  Serial3.begin(9600);
+  // Serial3.begin(9600);
+  
+  stopAllMotors(false);
   //unitTest();
 
 
@@ -646,17 +649,17 @@ void loop(){
   }
 
   if (currentStatus == ARTICULATING) {
-    
+    print("needs to articulate: true");
     if (needsToArticulate() == true) {
       articulateAllWheels();
     } 
     else {
+      print("needs to articulate: false");
       currentStatus = START_DRIVING;
     }
   }
 
   if (currentStatus == START_DRIVING) {
-   
     //TODO: Check with MEs about possibility of losing correct articulation (by going over an obstacle or something)
 
     //Check if we need to articulate
@@ -667,8 +670,11 @@ void loop(){
     //   return;
     // }
 
+    print("current status: start_driving");
     //Set stop drive time
     driveStopTime = millis() + wheelTarget.drive_duration*1000;
+    
+    print("after millis(), drive all motors");
 
     //Send drive start command
     driveAllMotors();
@@ -678,6 +684,7 @@ void loop(){
 
   if (currentStatus == IS_DRIVING) {
     if (millis() >= driveStopTime) {
+      print("over time limit: stop driving");
       stopAllMotors(false);
     }
   }
