@@ -601,7 +601,8 @@ void loop(){
     return;
   } 
 
-  //Currently stopped, don't do anything
+  //Currently stopped, don't do anything.
+  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
   if (currentStatus == STOPPED) {
     // do nothing
   }
@@ -624,6 +625,7 @@ void loop(){
     // if (needsToArticulate()) {
     //   //Set state to articulate and don't drive
     //   currentStatus = ARTICULATING;
+	//   // TODO: Does this need a rosnode.spin() ?
     //   return;
     // }
 
