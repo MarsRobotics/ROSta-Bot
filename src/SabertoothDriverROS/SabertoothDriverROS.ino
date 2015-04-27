@@ -379,7 +379,7 @@ void stopAllMotors(bool EStop) {
  *  motorID - the id of the motor to spin (0-11)
  *  speed - the speed at which to spin the motor.
  */
-void driveClockwise(int motorID, int speed){ /*
+void driveClockwise(int motorID, int speed){
   if(0 == speed)
   {
    motorInMotion[motorID] = false; 
@@ -407,7 +407,7 @@ void driveClockwise(int motorID, int speed){ /*
   Serial3.write(((char)speed));
   Serial3.write(checksum);
   //TODO: Move the delay time to a constant
-  delayMicroseconds(1000); */
+  delayMicroseconds(1000); 
 }
 
 /**
@@ -417,7 +417,7 @@ void driveClockwise(int motorID, int speed){ /*
  *  motorID - the id of the motor to spin (0-11)
  *  speed - the speed at which to spin the motor.
  */
-void driveCounterclockwise(char motorID, char speed){ /*
+void driveCounterclockwise(char motorID, char speed){ 
   if(0 == speed)
   {
    motorInMotion[motorID] = false; 
@@ -440,7 +440,7 @@ void driveCounterclockwise(char motorID, char speed){ /*
   Serial3.write(speed);
   Serial3.write(checksum);
   //TODO: Move the delay time to a constant
-  delayMicroseconds(1000);*/
+  delayMicroseconds(1000);
 }
 
 /**
@@ -449,6 +449,7 @@ void driveCounterclockwise(char motorID, char speed){ /*
 void updateArticulationValues()
 {
   
+  /*
   // Code for command line testing purposes
   wheelStatus.ml_articulation_angle = wheelTarget.ml_articulation_angle;
   wheelStatus.rl_articulation_angle = wheelTarget.rl_articulation_angle;
@@ -456,7 +457,7 @@ void updateArticulationValues()
   wheelStatus.mr_articulation_angle = (int)wheelTarget.mr_articulation_angle;
   wheelStatus.rr_articulation_angle = (int)wheelTarget.rr_articulation_angle;
   wheelStatus.fr_articulation_angle = (int)wheelTarget.fr_articulation_angle;
-  /*
+  */
   
   int encoderPostition = EncoderFL::getPosition();
   if (encoderPostition < 0)
@@ -499,7 +500,7 @@ void updateArticulationValues()
     encoderPostition += ENCODER_POSITIONS;
   }
 
-  wheelStatus.rr_articulation_angle = (int)((encoderPostition * 9L) / 10L);*/
+  wheelStatus.rr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 }
 
 void unitTest(){
@@ -621,7 +622,7 @@ void setup(){
 
 
   // Open communication with Saberteeth
-  // Serial3.begin(9600);
+  Serial3.begin(9600);
   
   stopAllMotors(false);
   //unitTest();
@@ -674,8 +675,6 @@ void loop(){
     //Set stop drive time
     driveStopTime = millis() + (long)wheelTarget.drive_duration*1000;
     
-    //print("after millis, drive all motors");
-
     //Send drive start command
     driveAllMotors();
 
