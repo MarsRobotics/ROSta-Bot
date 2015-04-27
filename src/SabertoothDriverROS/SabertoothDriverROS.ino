@@ -656,6 +656,7 @@ void loop(){
     } 
     else {
       print("needs to articulate: false");
+      stopAllMotors(false);
       currentStatus = START_DRIVING;
     }
   }
