@@ -1,6 +1,6 @@
 // Header file for the SabertoothDriverROS class.
 #include <command2ros/ManualCommand.h>
-
+#include "Conveyor.h"
 
 
 // DATA STRUCTURES

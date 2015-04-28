@@ -11,3 +11,7 @@ srb_gen/
 **.pyc
 **/*~
 *~
+
+src/.DS_Store
+
+.DS_Store
