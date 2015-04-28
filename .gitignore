@@ -5,6 +5,7 @@ msg_gen/
 install/
 devel/
 srb_gen/
+src/rosserial
 .idea
 .catkin_workspace
 **/*.pyc

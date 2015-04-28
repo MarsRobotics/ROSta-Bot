@@ -1,9 +1,7 @@
 /* 
- / This is a simple Arduino program that demonstrates the
- / "Packetized Serial" method of using the Sabertooth Motor
- / Controller. 
+ / This handles all of the device drivers for the Transporter.
  /
- / SETUP:
+ / SABERTOOTH SETUP:
  /  If ON is "up", then DIPs 1-3 should be DOWN. DIPs 4-6 are address DIPs,
  / and will vary by ther sabertooth.
  / Sabertooth[s] should be connected on S1 to TX3 on an Arduino Mega 2560.
