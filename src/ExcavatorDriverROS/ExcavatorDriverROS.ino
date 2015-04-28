@@ -1,7 +1,9 @@
 #include <ros.h>
 // Include a custom command message.
 #include <command2ros/ExcavatorCommand.h>
+#include <std_msgs/String.h>
 
+void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualCommand);
 
 // Device constants
 const int NUM_TRANSPORT_MOTORS = 4;
@@ -43,15 +45,19 @@ const unsigned char MOTOR_FLIPPED[4] = {
 
 // State machine states
 const int STOPPED = 0;
-const int DRIVING = 1;
-const int DIGGING = 2;
-const int CONVEYING = 3;
+const int READY_TO_DRIVE = 1;
+const int DRIVING = 2;
+const int READY_TO_DIG = 3;
+const int DIGGING =  4;
+const int READY_TO_CONVEY = 5;
+const int CONVEYING = 6;
 
 int currentStatus = STOPPED;
 
 const int DRIVE_SPEED = 20;
 const int ROTATION_SPEED = 20;
 
+unsigned long driveUntilTime = 0;
 
 //
 // ROS Node Initialization
@@ -78,16 +84,31 @@ void print(char* errorMsg){
 //
 // ROS Subsribers
 //
-ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
-
+ros::Subscriber<command2ros::ExcavatorCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
+command2ros::ExcavatorCommand lastExcavatorCommand;
 void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualCommand)
 {
- // TODO: excavator callback 
+ lastExcavatorCommand.fl_drive_speed = newManualCommand.fl_drive_speed;
+ lastExcavatorCommand.fr_drive_speed = newManualCommand.fr_drive_speed;
+ lastExcavatorCommand.bl_drive_speed = newManualCommand.bl_drive_speed;
+ lastExcavatorCommand.br_drive_speed = newManualCommand.br_drive_speed;
+ lastExcavatorCommand.drive_duration = newManualCommand.drive_duration;
+ lastExcavatorCommand.e_stop = newManualCommand.e_stop;
+ if(lastExcavatorCommand.e_stop)
+ {
+  stopAllMotors();
+  currentStatus = STOPPED; 
+ }
+ else
+ {
+   stopAllMotors();
+   currentStatus = READY_TO_DRIVE;
+ }
 }
 
 
 //Inbound wheel command
-command2ros::ManualCommand wheelTarget;
+command2ros::ExcavatorCommand wheelTarget;
 
 void stopAllMotors()
 {
@@ -150,6 +171,33 @@ void driveBackwards(char motorID, char speed){
   delayMicroseconds(1000);
 }
 
+// Function that takes a SIGNED speed value and converts it to an UNSIGNED drive command.
+void helpDrive(char motorID, char speed)
+{
+  if(speed < 0)
+  {
+    driveBackwards(motorID, -speed); 
+  }
+  else
+  {
+    driveForwards(motorID, speed);
+  }
+}
+
+// Function to drive the wheels
+void driveTires()
+{
+ if(currentStatus == READY_TO_DRIVE)
+ {
+   helpDrive(FRONT_LEFT_DRIVE_MOTOR_ID, lastExcavatorCommand.fl_drive_speed);
+   helpDrive(FRONT_RIGHT_DRIVE_MOTOR_ID, lastExcavatorCommand.fr_drive_speed);
+   helpDrive(BACK_LEFT_DRIVE_MOTOR_ID, lastExcavatorCommand.bl_drive_speed);
+   helpDrive(BACK_RIGHT_DRIVE_MOTOR_ID, lastExcavatorCommand.br_drive_speed);
+   currentStatus = DRIVING;
+ } 
+  
+}
+
 // Wheel unit test.
 // Each wheel should rotate individually.
 void unitTest()
@@ -180,21 +228,28 @@ void loop()
 {
  //Currently stopped, don't do anything.
   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
-  if (currentStatus == STOPPED) {
-    // do nothing
-  }
-  else if (currentStatus == DRIVING)
-  {
-   // TODO: Drive 
-  }
-  else if(currentStatus == DIGGING)
-  {
-    // TODO: Dig 
-  }
-  else if(currentStatus == CONVEYING)
-  {
-    // TODO: Convey 
-  }
+switch(currentStatus)
+{
+ case READY_TO_DRIVE:
+   driveTires();
+   driveUntilTime = millis() + (long)lastExcavatorCommand.drive_duration;
+ break;
+ case DRIVING:
+   if(millis() > driveUntilTime)
+   {
+     stopAllMotors();
+     // TODO: Change this to excavating, if necessary.
+    currentStatus = STOPPED;
+   }
+ break;
+  
+ case STOPPED:
+  // fall through
+ default:
+ // TODO: Convey / Dig 
+ break;
+}
+  
   //TODO: Publish sensor / state data?
   //Sync with ROS
   excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
