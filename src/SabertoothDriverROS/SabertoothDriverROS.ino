@@ -13,6 +13,7 @@
  */
 #include <ros.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Int16.h>
 #include <command2ros/ManualCommand.h>
 #include <EncoderFL.h>
 #include <EncoderML.h>
@@ -49,6 +50,18 @@ const int START_DRIVING = 2;
 //Started articulating, drive
 const int IS_DRIVING = 3;
 
+//Received command to start rotation
+const int START_ROTATING_CONVEYOR = 4;
+
+//Started rotating conveyor
+const int ROTATING_CONVEYOR = 5;
+
+//Received command to rotate winch
+const int START_ROTATING_WINCH = 6;
+
+//Started rotating winch
+const int ROTATING_WINCH = 7;
+
 //The state the robot is currently in
 int currentStatus = STOPPED;
 long driveStopTime = 0;
@@ -73,6 +86,16 @@ const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 // This corresponds to the "maximum speed" available to the robot.
 const int MAX_DRIVE_SPEED = 30;
 bool motorInMotion[12];
+
+//Conveyor and winch system constants
+const char CONVEYOR_SPEED = 20;
+const char WINCH_SPEED = 30;
+
+int conveyorRotationTime = 0;
+int winchRotationTime = 0;
+
+long conveyorStopTime = 0;
+long winchStopTime = 0;
 
 //
 // ROS initialization
@@ -145,7 +168,28 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
   }
 
 }
+
+void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
+  if(newConveyorCommand.data != 0){
+    currentStatus = START_ROTATING_CONVEYOR;
+    conveyorRotationTime = newConveyorCommand.data;
+  }
+}
+
+void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
+  if(newWinchCommand.data != 0){
+    currentStatus = START_ROTATING_WINCH;
+    winchRotationTime = newWinchCommand.data;
+  }
+}
+
+
 ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback);
+
+ros::Subscriber<std_msgs::Int16> conveyorSubscriber("ConveyorCommand", &newConveyorCommandCallback);
+
+ros::Subscriber<std_msgs::Int16> winchSubscriber("ConveyorCommand", &newWinchCommandCallback);
+
 
 // Print error message to "sabertooth_debugger" topic
 void print(char* errorMsg){
@@ -371,6 +415,36 @@ void stopAllMotors(bool EStop) {
   }
 
 }
+
+void driveConveyor(){
+  if(conveyorRotationTime < 0){
+    driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+    driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  }
+  else if(conveyorRotationTime > 0){
+    driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+    driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  }
+}
+
+void stopConveyor(){
+  driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+}
+
+void driveWinch(){
+   if(winchRotationTime < 0){
+    driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+  }
+  else if(conveyorRotationTime > 0){
+    driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+  }
+}
+
+void stopWinch(){
+  driveCounterclockwise(WINCH_MOTOR_ID, 0);
+}
+
 
 /**
  * Drives a given motor at a given speed in a clockwise direction
@@ -647,6 +721,30 @@ void loop(){
   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
   if (currentStatus == STOPPED) {
     // do nothing
+  }
+  
+  if(currentStatus == START_ROTATING_CONVEYOR){
+    conveyorStopTime = millis() + (long)conveyorRotationTime;   
+    driveConveyor();
+    currentStatus = ROTATING_CONVEYOR;
+  }
+  
+  if(currentStatus == ROTATING_CONVEYOR){
+    if(millis() >= conveyorStopTime){
+      stopConveyor();
+    }
+  }
+  
+  if(currentStatus == START_ROTATING_WINCH){
+    conveyorStopTime = millis() + (long)winchRotationTime;   
+    driveWinch();
+    currentStatus = ROTATING_CONVEYOR;
+  }
+  
+  if(currentStatus == ROTATING_WINCH){
+    if(millis() >= winchStopTime){
+      stopWinch();
+    }
   }
 
   if (currentStatus == ARTICULATING) {
