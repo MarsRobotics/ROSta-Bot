@@ -437,7 +437,7 @@ void stopConveyor(){
 
 void driveWinch(){
    if(winchRotationTime < 0){
-    driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+    driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED);
   }
   else if(conveyorRotationTime > 0){
     driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
