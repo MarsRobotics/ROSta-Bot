@@ -1,5 +1,7 @@
 #include <ros.h>
-// TODO: Include a custom message command.
+// Include a custom command message.
+#include <command2ros/ExcavatorCommand.h>
+
 
 // Device constants
 const int NUM_TRANSPORT_MOTORS = 4;
@@ -41,17 +43,51 @@ const unsigned char MOTOR_FLIPPED[4] = {
 
 // State machine states
 const int STOPPED = 0;
-const int ROTATING = 1;
-const int DRIVING = 2;
-const int DIGGING = 3;
-const int CONVEYING = 4;
+const int DRIVING = 1;
+const int DIGGING = 2;
+const int CONVEYING = 3;
 
 int currentStatus = STOPPED;
 
 const int DRIVE_SPEED = 20;
 const int ROTATION_SPEED = 20;
 
-// TODO: ROS nodes and stuff: init, callback functions, etc
+
+//
+// ROS Node Initialization
+// 
+ros::NodeHandle excavatorNode;
+//
+// ROS Publishers
+// 
+
+//Sample status publisher
+//command2ros::ExcavatorCommand excavatorTarget;
+//ros::Publisher pubexcavatorStatus("???", &excavatorTarget);
+
+//Publisher to print debug statements
+std_msgs::String debugMsg;
+ros::Publisher pubDebug("excavator_debugger", &debugMsg);
+
+// Print error message to "excavator_debugger" topic
+void print(char* errorMsg){
+  debugMsg.data = errorMsg;
+  pubDebug.publish(&debugMsg);
+}
+
+//
+// ROS Subsribers
+//
+ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
+
+void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualCommand)
+{
+ // TODO: excavator callback 
+}
+
+
+//Inbound wheel command
+command2ros::ManualCommand wheelTarget;
 
 void stopAllMotors()
 {
@@ -142,7 +178,31 @@ void setup()
 
 void loop()
 {
-  
+ //Currently stopped, don't do anything.
+  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
+  if (currentStatus == STOPPED) {
+    // do nothing
+  }
+  else if (currentStatus == DRIVING)
+  {
+   // TODO: Drive 
+  }
+  else if(currentStatus == DIGGING)
+  {
+    // TODO: Dig 
+  }
+  else if(currentStatus == CONVEYING)
+  {
+    // TODO: Convey 
+  }
+  //TODO: Publish sensor / state data?
+  //Sync with ROS
+  excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
+
+  //Delay so we don't overload any serial buffers
+  for(int i = 0; i < 7; i++){
+    delayMicroseconds(15000);
+  } 
 }
 
 
