@@ -8,20 +8,20 @@ const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ID = 1;
 const unsigned char BACK_LEFT_DRIVE_MOTOR_ID = 2;
 const unsigned char BACK_RIGHT_DRIVE_MOTOR_ID = 3;
 
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_ADDRESS = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 0;
-const unsigned char BACK_LEFT_DRIVE_MOTOR_ADDRESS = 0;
-const unsigned char BACK_RIGHT_DRIVE_MOTOR_ADDRESS = 0;
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_ADDRESS = 131;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 128;
+const unsigned char BACK_LEFT_DRIVE_MOTOR_ADDRESS = 132;
+const unsigned char BACK_RIGHT_DRIVE_MOTOR_ADDRESS = 129;
 const unsigned char MOTOR_ADDRESS[4] = {
   FRONT_LEFT_DRIVE_MOTOR_ADDRESS,
   FRONT_RIGHT_DRIVE_MOTOR_ADDRESS,
   BACK_LEFT_DRIVE_MOTOR_ADDRESS,
   BACK_RIGHT_DRIVE_MOTOR_ADDRESS};
 
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 0;
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 4;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 4;
 const unsigned char BACK_LEFT_DRIVE_MOTOR_COMMAND = 0;
-const unsigned char BACK_RIGHT_DRIVE_MOTOR_COMMAND = 0;
+const unsigned char BACK_RIGHT_DRIVE_MOTOR_COMMAND = 4;
 const unsigned char MOTOR_COMMAND[4] = {
   FRONT_LEFT_DRIVE_MOTOR_COMMAND,
   FRONT_RIGHT_DRIVE_MOTOR_COMMAND,
@@ -29,8 +29,8 @@ const unsigned char MOTOR_COMMAND[4] = {
   BACK_RIGHT_DRIVE_MOTOR_COMMAND};
 
 const unsigned char FRONT_LEFT_DRIVE_MOTOR_FLIPPED = 0;
-const unsigned char FRONT_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
-const unsigned char BACK_LEFT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char FRONT_RIGHT_DRIVE_MOTOR_FLIPPED = 1;
+const unsigned char BACK_LEFT_DRIVE_MOTOR_FLIPPED = 1;
 const unsigned char BACK_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char MOTOR_FLIPPED[4] = {
   FRONT_LEFT_DRIVE_MOTOR_FLIPPED,
@@ -122,11 +122,11 @@ void unitTest()
   for(int i = 0; i < 4; ++i)
   {
     driveForwards(i,DRIVE_SPEED);
-    delay(3000);
+    delay(2000);
     driveBackwards(i,DRIVE_SPEED);
-    delay(3000);
+    delay(2000);
     driveForwards(i,0);
-    delay(1000);
+    delay(600);
   }
 }
 
@@ -138,7 +138,6 @@ void setup()
   // This must be done AFTER stopping all the motors.
   stopAllMotors(); 
   unitTest();
-  
 }
 
 void loop()
