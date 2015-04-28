@@ -85,17 +85,19 @@ const int ENCODER_POSITIONS = 400;
 const double ARTICULATION_DRIVE_SPEED = 6260.0 / 7521.0;
 // This corresponds to the "maximum speed" available to the robot.
 const int MAX_DRIVE_SPEED = 30;
-bool motorInMotion[12];
+bool motorInMotion[15];
 
 //Conveyor and winch system constants
 const char CONVEYOR_SPEED = 20;
 const char WINCH_SPEED = 30;
 
 int conveyorRotationTime = 0;
-int winchRotationTime = 0;
-
 long conveyorStopTime = 0;
+int currentConveyorStatus = STOPPED;
+
+int winchRotationTime = 0;
 long winchStopTime = 0;
+int currentWinchStatus = STOPPED;
 
 //
 // ROS initialization
@@ -430,6 +432,7 @@ void driveConveyor(){
 void stopConveyor(){
   driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+  currentConveyorStatus = STOPPED;
 }
 
 void driveWinch(){
@@ -443,6 +446,7 @@ void driveWinch(){
 
 void stopWinch(){
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
+  currentWinchStatus = STOPPED;
 }
 
 
@@ -675,7 +679,7 @@ void delaySeconds(long n){
  */
 void setup(){
   // To start, no motor is moving.
-  for(int i = 0; i < 12; ++i)
+  for(int i = 0; i < 15; ++i)
   {
    motorInMotion[i] = false; 
   }
@@ -697,10 +701,9 @@ void setup(){
 
   // Open communication with Saberteeth
   Serial3.begin(9600);
-  
+
   stopAllMotors(false);
   //unitTest();
-
 
   // Initialize the message
   setupWheelStatus();
@@ -716,6 +719,30 @@ void loop(){
     //TODO: This will never happen right now, may want for competition though
     return;
   } 
+  
+  if(currentConveyorStatus == START_ROTATING_CONVEYOR){
+    conveyorStopTime = millis() + (long)conveyorRotationTime;   
+    driveConveyor();
+    currentConveyorStatus = ROTATING_CONVEYOR;
+  }
+  
+  if(currentConveyorStatus == ROTATING_CONVEYOR){
+    if(millis() >= conveyorStopTime){
+      stopConveyor();
+    }
+  }
+  
+  if(currentWinchStatus == START_ROTATING_WINCH){
+    winchStopTime = millis() + (long)winchRotationTime;   
+    driveWinch();
+    currentWinchStatus = ROTATING_CONVEYOR;
+  }
+  
+  if(currentWinchStatus == ROTATING_WINCH){
+    if(millis() >= winchStopTime){
+      stopWinch();
+    }
+  }
 
   //Currently stopped, don't do anything.
   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
@@ -723,30 +750,6 @@ void loop(){
     // do nothing
   }
   
-  if(currentStatus == START_ROTATING_CONVEYOR){
-    conveyorStopTime = millis() + (long)conveyorRotationTime;   
-    driveConveyor();
-    currentStatus = ROTATING_CONVEYOR;
-  }
-  
-  if(currentStatus == ROTATING_CONVEYOR){
-    if(millis() >= conveyorStopTime){
-      stopConveyor();
-    }
-  }
-  
-  if(currentStatus == START_ROTATING_WINCH){
-    conveyorStopTime = millis() + (long)winchRotationTime;   
-    driveWinch();
-    currentStatus = ROTATING_CONVEYOR;
-  }
-  
-  if(currentStatus == ROTATING_WINCH){
-    if(millis() >= winchStopTime){
-      stopWinch();
-    }
-  }
-
   if (currentStatus == ARTICULATING) {
     print("needs to articulate: true");
     if (needsToArticulate() == true) {
