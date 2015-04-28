@@ -396,7 +396,7 @@ void driveMotor(int motorID, int speed) {
 }
 
 /**
- * Stops all the motors (Articulation and Wheels) and chages the current state to reflect the stop
+ * Stops all the motors (Articulation, conveyor, winch, and Wheels) and chages the current state to reflect the stop
  *
  * Parameters:
  *  EStop - Weather or not this is an E-Stop or a normal end of command stop
@@ -405,18 +405,35 @@ void stopAllMotors(bool EStop) {
 
   if (EStop == true) {
     currentStatus = E_STOPPED;
+    currentWinchStatus = STOPPED;
+    currentConveyorStatus = STOPPED;
   } 
   else {
     currentStatus = STOPPED;
+    currentWinchStatus = STOPPED;
+    currentConveyorStatus = STOPPED;
   }
 
   //Stop all motors 
   const int speed = 0;
+  for(int motorID = 0; motorID <= 14; ++motorID) {
+    driveClockwise(motorID, speed);
+  }
+}
+
+/**
+ * Stops the movement motors (Articulation and Wheels) and chages the current state to reflect the stop.
+ */
+void stopMovementMotors() {
+    currentStatus = STOPPED;
+
+  //Stop all movement (drive and articulation) motors 
+  const int speed = 0;
   for(int motorID = 0; motorID <= 11; ++motorID) {
     driveClockwise(motorID, speed);
   }
-
 }
+
 
 void driveConveyor(){
   if(conveyorRotationTime < 0){
@@ -705,7 +722,7 @@ void setup(){
   stopAllMotors(false);
   //unitTest();
 
-  // Initialize the message
+  // Initialize the current wheel status message
   setupWheelStatus();
 }
 
@@ -721,7 +738,7 @@ void loop(){
   } 
   
   if(currentConveyorStatus == START_ROTATING_CONVEYOR){
-    conveyorStopTime = millis() + (long)conveyorRotationTime;   
+    conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
     driveConveyor();
     currentConveyorStatus = ROTATING_CONVEYOR;
   }
@@ -733,7 +750,7 @@ void loop(){
   }
   
   if(currentWinchStatus == START_ROTATING_WINCH){
-    winchStopTime = millis() + (long)winchRotationTime;   
+    winchStopTime = millis() + (long)abs(winchRotationTime);   
     driveWinch();
     currentWinchStatus = ROTATING_CONVEYOR;
   }
@@ -757,7 +774,7 @@ void loop(){
     } 
     else {
       print("needs to articulate: false");
-      stopAllMotors(false);
+      stopMovementMotors();
       currentStatus = START_DRIVING;
     }
   }
@@ -786,7 +803,7 @@ void loop(){
   if (currentStatus == IS_DRIVING) {
     if (millis() >= driveStopTime) {
       print("over time limit: stop driving");
-      stopAllMotors(false);
+      stopMovementMotors();
     }
   }
 
