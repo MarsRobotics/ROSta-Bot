@@ -604,7 +604,8 @@ void unitTest(){
     delayMicroseconds(15000);
   }
 
-  // loop through and test all wheels
+  // loop through and test all drive motors:
+  // 1.5s clockwise, then 1.5s counterclockwise.
   for(int i = 0; i < 6; i++){
     // clockwise
     driveClockwise(i, 20);
@@ -625,6 +626,8 @@ void unitTest(){
     }
   }
 
+  // Test all articulation motors:
+  // 1.5s clockwise, then 1.5s counterclockwise.
   for(int i = 6; i < 12; ++i){
     // clockwise
     driveClockwise(i, 30);
@@ -644,6 +647,39 @@ void unitTest(){
       delayMicroseconds(15000);
     }
   }
+  // Test the winch.
+  unitTestWinch();
+  // Test the conveyor.
+  unitTestConveyor(); 
+}  
+  
+void unitTestConveyor()
+{
+  // Test the conveyor:
+  // 2s "dumping" / forwards (clockwise), 2s "collecting" / backwards (counterclockwise).
+
+  driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(2);
+  driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(2);
+  driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+  delaySeconds(2);
+  
+}
+
+void unitTestWinch()
+{
+  // Test the winch: 
+  // 2s up (clockwise), 2s down (counterclockwise).
+  driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+  delaySeconds(2);
+  driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+  delaySeconds(2);
+  driveCounterclockwise(WINCH_MOTOR_ID, 0);
+  delaySeconds(2);
 }
 
 void unitTest2(){
