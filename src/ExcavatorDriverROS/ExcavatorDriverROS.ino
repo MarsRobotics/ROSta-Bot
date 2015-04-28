@@ -13,30 +13,30 @@ const unsigned char FRONT_RIGHT_DRIVE_MOTOR_ADDRESS = 0;
 const unsigned char BACK_LEFT_DRIVE_MOTOR_ADDRESS = 0;
 const unsigned char BACK_RIGHT_DRIVE_MOTOR_ADDRESS = 0;
 const unsigned char MOTOR_ADDRESS[4] = {
-  FRONT_LEFT_MOTOR_ADDRESS,
-  FRONT_RIGHT_MOTOR_ADDRESS,
-  BACK_LEFT_MOTOR_ADDRESS,
-  BACK_RIGHT_MOTOR_ADDRESS};
+  FRONT_LEFT_DRIVE_MOTOR_ADDRESS,
+  FRONT_RIGHT_DRIVE_MOTOR_ADDRESS,
+  BACK_LEFT_DRIVE_MOTOR_ADDRESS,
+  BACK_RIGHT_DRIVE_MOTOR_ADDRESS};
 
 const unsigned char FRONT_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char FRONT_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char BACK_LEFT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char BACK_RIGHT_DRIVE_MOTOR_COMMAND = 0;
 const unsigned char MOTOR_COMMAND[4] = {
-  FRONT_LEFT_MOTOR_COMMAND,
-  FRONT_RIGHT_MOTOR_COMMAND,
-  BACK_LEFT_MOTOR_COMMAND,
-  BACK_RIGHT_MOTOR_COMMAND};
+  FRONT_LEFT_DRIVE_MOTOR_COMMAND,
+  FRONT_RIGHT_DRIVE_MOTOR_COMMAND,
+  BACK_LEFT_DRIVE_MOTOR_COMMAND,
+  BACK_RIGHT_DRIVE_MOTOR_COMMAND};
 
 const unsigned char FRONT_LEFT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char FRONT_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char BACK_LEFT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char BACK_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char MOTOR_FLIPPED[4] = {
-  FRONT_LEFT_MOTOR_FLIPPED,
-  FRONT_RIGHT_MOTOR_FLIPPED,
-  BACK_LEFT_MOTOR_FLIPPED,
-  BACK_RIGHT_MOTOR_FLIPPED};
+  FRONT_LEFT_DRIVE_MOTOR_FLIPPED,
+  FRONT_RIGHT_DRIVE_MOTOR_FLIPPED,
+  BACK_LEFT_DRIVE_MOTOR_FLIPPED,
+  BACK_RIGHT_DRIVE_MOTOR_FLIPPED};
 
 
 // State machine states
@@ -56,18 +56,18 @@ const int ROTATION_SPEED = 20;
 void stopAllMotors()
 {
     for(int motorID = 0; motorID < NUM_TRANSPORT_MOTORS; ++motorID) {
-    driveClockwise(motorID, 0);
+    driveForwards(motorID, 0);
   }
 }
 
 /**
- * Drives a given motor at a given speed in a clockwise direction
+ * Drives a given motor at a given speed in the "Forwards" direction
  *
  * Paramteters:
  *  motorID - the id of the motor to spin (0-11)
  *  speed - the speed at which to spin the motor.
  */
-void driveClockwise(int motorID, int speed){  
+void driveForwards(int motorID, int speed){  
   // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
   // Build the data packet:
   // Get the address and motor command ID from a predefined array.
@@ -90,13 +90,13 @@ void driveClockwise(int motorID, int speed){
 }
 
 /**
- * Drives a given motor at a given speed in a counterclockwise direction
+ * Drives a given motor at a given speed in the "backwards" direction.
  *
  * Paramteters:
  *  motorID - the id of the motor to spin (0-11)
  *  speed - the speed at which to spin the motor.
  */
-void driveCounterclockwise(char motorID, char speed){ 
+void driveBackwards(char motorID, char speed){ 
   // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
   unsigned char address = MOTOR_ADDRESS[motorID];
   unsigned char command = MOTOR_COMMAND[motorID] + 1;
@@ -114,6 +114,22 @@ void driveCounterclockwise(char motorID, char speed){
   delayMicroseconds(1000);
 }
 
+// Wheel unit test.
+// Each wheel should rotate individually.
+void unitTest()
+{
+  
+  for(int i = 0; i < 4; ++i)
+  {
+    driveForwards(i,DRIVE_SPEED);
+    delay(3000);
+    driveBackwards(i,DRIVE_SPEED);
+    delay(3000);
+    driveForwards(i,0);
+    delay(1000);
+  }
+}
+
 void setup()
 {
   // Initialize the serial connection to the saberteeth
@@ -121,6 +137,8 @@ void setup()
   // Stop all the motors, if they were moving.
   // This must be done AFTER stopping all the motors.
   stopAllMotors(); 
+  unitTest();
+  
 }
 
 void loop()
