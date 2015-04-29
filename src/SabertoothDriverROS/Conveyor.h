@@ -24,5 +24,5 @@ const unsigned char WINCH_MOTOR_COMMAND = 0;
 
 const unsigned char LEFT_CONVEYOR_MOTOR_FLIPPED = 0;
 const unsigned char RIGHT_CONVEYOR_MOTOR_FLIPPED = 0;
-const unsigned char WINCH_MOTOR_FLIPPED = 0;
+const unsigned char WINCH_MOTOR_FLIPPED = 1;
 
