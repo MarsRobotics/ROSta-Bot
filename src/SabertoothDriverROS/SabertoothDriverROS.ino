@@ -86,7 +86,7 @@ const int MAX_DRIVE_SPEED = 30;
 bool motorInMotion[15];
 
 //Conveyor and winch system constants
-const char CONVEYOR_SPEED = 20;
+const char CONVEYOR_SPEED = 60;
 const char WINCH_SPEED = 15;
 
 int conveyorRotationTime = 0;
@@ -658,16 +658,14 @@ void unitTestConveyor()
 
   //driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(3);
+  driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
   delaySeconds(2);
-  driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(1);
   //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(2);
+  delaySeconds(3);
   //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
-  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
-  delaySeconds(1);
-  
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);  
 }
 
 void unitTestWinch()
@@ -716,12 +714,46 @@ void unitTest2(){
   }
 }
 
+void proofOfLife()
+{
+ // Proof of life newspaper (5s)
+ delaySeconds(5);
+ // Spin conveyor backwards (10s)
+ driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+ delaySeconds(10);
+ driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+ // Lift the winch (10s)
+ driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
+ delaySeconds(10);
+ driveClockwise(WINCH_MOTOR_ID, 0);
+ // Drive forwards for 10s
+ int driveSpeed = 20;
+ driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+ driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+ driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+ driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+ driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+ driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+ delaySeconds(10);
+ driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
+ driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
+ driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
+ driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
+ driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
+ driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
+ // Spin conveyor forwards (20s)
+ driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+ delaySeconds(10);
+ driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+  
+}
 
-void delaySeconds(long n){
-  int delayTime = 15000;
-  long desiredMicroDelay = n * 100000;
+
+void delaySeconds(unsigned int n){
+  unsigned int delayTime = 10000;
+  long desiredMicroDelay = ((long)n) * 1000000L;
   long numCycles = desiredMicroDelay / (long)delayTime;
-  for(int j = 0; j < numCycles; j++){
+  for(long j = 0L; j < numCycles; j++){
     delayMicroseconds(delayTime);
   }
 }
@@ -759,7 +791,7 @@ void setup(){
   stopAllMotors(false);
   //unitTest();
   unitTestConveyor();
-  unitTestWinch();
+  //unitTestWinch();
 
   // Initialize the current wheel status message
   setupWheelStatus();
