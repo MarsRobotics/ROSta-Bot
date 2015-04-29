@@ -68,18 +68,18 @@ const unsigned char REAR_LEFT_ARTICULATION_MOTOR_COMMAND = 4;
 const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_COMMAND = 0;
 
 // Direction indicator. 0 means "correct" (no software flip necessary). 1 means "backwards" (software flip necessary).
-const unsigned char FRONT_LEFT_DRIVE_MOTOR_FLIPPED = 0;
+const unsigned char FRONT_LEFT_DRIVE_MOTOR_FLIPPED = 1;
 const unsigned char FRONT_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char MIDDLE_LEFT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char MIDDLE_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 const unsigned char REAR_LEFT_DRIVE_MOTOR_FLIPPED = 0;
-const unsigned char REAR_RIGHT_DRIVE_MOTOR_FLIPPED = 1;
+const unsigned char REAR_RIGHT_DRIVE_MOTOR_FLIPPED = 0;
 // Articulation motor offsets. 0 or 4 corresponds to "counterclockwise".
 // a value of 1 or 5 corresponds to "clockwise".
-const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
-const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_FLIPPED = 1;
-const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
-const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_FLIPPED = 1;
+const unsigned char FRONT_LEFT_ARTICULATION_MOTOR_FLIPPED = 0;
+const unsigned char FRONT_RIGHT_ARTICULATION_MOTOR_FLIPPED = 0;
+const unsigned char MIDDLE_LEFT_ARTICULATION_MOTOR_FLIPPED = 0;
+const unsigned char MIDDLE_RIGHT_ARTICULATION_MOTOR_FLIPPED = 0;
 const unsigned char REAR_LEFT_ARTICULATION_MOTOR_FLIPPED = 1;
 const unsigned char REAR_RIGHT_ARTICULATION_MOTOR_FLIPPED = 0;
 
