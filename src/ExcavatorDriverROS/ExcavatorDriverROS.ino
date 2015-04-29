@@ -216,12 +216,15 @@ void unitTest()
 
 void setup()
 {
+  // Initialize ROS stuff
+  excavatorNode.initNode();
+  excavatorNode.subscribe(commandSubscriber);
   // Initialize the serial connection to the saberteeth
   Serial3.begin(9600);
   // Stop all the motors, if they were moving.
   // This must be done AFTER stopping all the motors.
   stopAllMotors(); 
-  unitTest();
+  //unitTest();
 }
 
 void loop()
