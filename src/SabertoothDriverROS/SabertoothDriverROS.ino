@@ -675,9 +675,11 @@ void unitTestWinch()
   // Test the winch: 
   // 2s up (clockwise), 2s down (counterclockwise).
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED);
-  delaySeconds(2);
+  delaySeconds(4);
+  driveCounterclockwise(WINCH_MOTOR_ID, 0);
+  delaySeconds(1);
   driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED);
-  delaySeconds(2);
+  delaySeconds(4);
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
   delaySeconds(2);
 }
