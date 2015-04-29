@@ -87,7 +87,7 @@ bool motorInMotion[15];
 
 //Conveyor and winch system constants
 const char CONVEYOR_SPEED = 20;
-const char WINCH_SPEED = 30;
+const char WINCH_SPEED = 15;
 
 int conveyorRotationTime = 0;
 long conveyorStopTime = 0;
@@ -654,17 +654,19 @@ void unitTest(){
 void unitTestConveyor()
 {
   // Test the conveyor:
-  // 2s "dumping" / forwards (clockwise), 2s "collecting" / backwards (counterclockwise).
+  // 2s "dumping" / forwards (clockwise), 1s pause, 2s "collecting" / backwards (counterclockwise).
 
-  driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  //driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   delaySeconds(2);
-  driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(1);
+  //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   delaySeconds(2);
-  driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
+  //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
-  delaySeconds(2);
+  delaySeconds(1);
   
 }
 
@@ -723,7 +725,6 @@ void delaySeconds(long n){
 }
 
 
-
 /**
  * Is called on starting the arduino.
  * 
@@ -755,6 +756,8 @@ void setup(){
 
   stopAllMotors(false);
   //unitTest();
+  unitTestConveyor();
+  unitTestWinch();
 
   // Initialize the current wheel status message
   setupWheelStatus();
