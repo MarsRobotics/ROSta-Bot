@@ -26,9 +26,10 @@ EncoderFL::EncoderFL()
 
 void EncoderFL::setupEncoderFL()
 {
-  EncoderFL::EncoderFLPINA = 2;
-  EncoderFL::EncoderFLPINB = 9;
-  EncoderFL::INTERRUPTID = 0;
+  
+  EncoderFL::EncoderFLPINA = 3;
+  EncoderFL::EncoderFLPINB = 8;
+  EncoderFL::INTERRUPTID = 1;
   EncoderFL::EncoderFLPosition = 0;
   EncoderFL::interruptsReceived = 0;
   EncoderFL::currentDirection = -1;

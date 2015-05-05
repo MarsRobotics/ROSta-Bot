@@ -795,7 +795,7 @@ void setup(){
   //unitTest();
   //unitTestConveyor();
   //unitTestWinch();
-  proofOfLife();
+  //proofOfLife();
 
   // Initialize the current wheel status message
   setupWheelStatus();
