@@ -110,6 +110,7 @@ ros::NodeHandle sabertoothDriverNode;
 // 
 
 //Publisher to present the rotation of each of the articulation joints
+command2ros::ManualCommand wheelOffset;
 command2ros::ManualCommand wheelStatus;
 ros::Publisher pubwheelStatus("current_rotation", &wheelStatus);// current rotation data for each wheel. 
 // This will publish when the angle is updated.
@@ -170,6 +171,20 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
 
 }
 
+void setActualArticulationValues(const command2ros::ManualCommand& articulationValues){
+  //Set articulation values
+  wheelOffset.fl_articulation_angle = (int)(articulationValues.fl_articulation_angle - wheelStatus.fl_articulation_angle - wheelOffset.fl_articulation_angle);
+  wheelOffset.ml_articulation_angle = (int)(articulationValues.ml_articulation_angle - wheelStatus.ml_articulation_angle - wheelOffset.ml_articulation_angle);
+  wheelOffset.rl_articulation_angle = (int)(articulationValues.rl_articulation_angle - wheelStatus.rl_articulation_angle - wheelOffset.rl_articulation_angle);
+
+  wheelOffset.fr_articulation_angle = (int)(articulationValues.fr_articulation_angle - wheelStatus.fr_articulation_angle - wheelOffset.fr_articulation_angle);
+  wheelOffset.mr_articulation_angle = (int)(articulationValues.mr_articulation_angle - wheelStatus.mr_articulation_angle - wheelOffset.mr_articulation_angle);
+  wheelOffset.rr_articulation_angle = (int)(articulationValues.rr_articulation_angle - wheelStatus.rr_articulation_angle - wheelOffset.rr_articulation_angle);
+  
+  //pubwheelStatus.publish(&wheelOffset);// current rotation data for each wheel. 
+
+}
+
 void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
   if(newConveyorCommand.data != 0){
     currentStatus = START_ROTATING_CONVEYOR;
@@ -185,7 +200,10 @@ void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
 }
 
 
+
 ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &newManualCommandCallback);
+
+ros::Subscriber<command2ros::ManualCommand> setActualArticulationSubscriber("SetActualArticulationValues", &setActualArticulationValues);
 
 ros::Subscriber<std_msgs::Int16> conveyorSubscriber("ConveyorCommand", &newConveyorCommandCallback);
 
@@ -205,6 +223,13 @@ void setupWheelStatus() {
   wheelStatus.mr_articulation_angle = 180;
   wheelStatus.rl_articulation_angle = 0;
   wheelStatus.rr_articulation_angle = 180;
+
+  wheelOffset.fl_articulation_angle = 0;
+  wheelOffset.fr_articulation_angle = 0;
+  wheelOffset.ml_articulation_angle = 0;
+  wheelOffset.mr_articulation_angle = 0;
+  wheelOffset.rl_articulation_angle = 0;
+  wheelOffset.rr_articulation_angle = 0;  
 
   wheelStatus.fl_drive_speed = 0;
   wheelStatus.fr_drive_speed = 0;
@@ -555,47 +580,46 @@ void updateArticulationValues()
   wheelStatus.fr_articulation_angle = (int)wheelTarget.fr_articulation_angle;
   */
   
-  int encoderPostition = EncoderFL::getPosition();
-  if (encoderPostition < 0)
+  int encoderPostition = EncoderFL::getPosition() + (int)(wheelOffset.fl_articulation_angle / 360 * 400);
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
   wheelStatus.fl_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  encoderPostition = EncoderML::getPosition();
-  if (encoderPostition < 0)
+  encoderPostition = EncoderML::getPosition() + (int)(wheelOffset.ml_articulation_angle / 360 * 400);
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
   wheelStatus.ml_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  encoderPostition = EncoderRL::getPosition();
-  if (encoderPostition < 0)
+  encoderPostition = EncoderRL::getPosition() + (int)(wheelOffset.rl_articulation_angle / 360 * 400);
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
   wheelStatus.rl_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  encoderPostition = EncoderFR::getPosition() - 200; // Subtract 200 b/c the right side is flipped.
-  if (encoderPostition < 0)
+  encoderPostition = EncoderFR::getPosition() + (int)(wheelOffset.fr_articulation_angle / 360 * 400) - 200; // Subtract 200 b/c the right side is flipped.
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
   wheelStatus.fr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  encoderPostition = EncoderMR::getPosition() - 200;
-  if (encoderPostition < 0)
+  encoderPostition = EncoderMR::getPosition() + (int)(wheelOffset.mr_articulation_angle / 360 * 400) - 200;
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
   wheelStatus.mr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 
-  encoderPostition = EncoderRR::getPosition() - 200;
-  if (encoderPostition < 0)
+  encoderPostition = EncoderRR::getPosition() + (int)(wheelOffset.rr_articulation_angle / 360 * 400) - 200;
+  while (encoderPostition < 0)
   {
     encoderPostition += ENCODER_POSITIONS;
   }
-
   wheelStatus.rr_articulation_angle = (int)((encoderPostition * 9L) / 10L);
 }
 
@@ -649,9 +673,9 @@ void unitTest(){
     }
   }
   // Test the winch.
-  unitTestWinch();
+  //unitTestWinch();
   // Test the conveyor.
-  unitTestConveyor(); 
+  //unitTestConveyor(); 
 }  
   
 void unitTestConveyor()
@@ -784,6 +808,7 @@ void setup(){
   //Initialize the ROS Node
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(commandSubscriber);
+  sabertoothDriverNode.subscribe(setActualArticulationSubscriber);
   sabertoothDriverNode.advertise(pubwheelStatus);
   sabertoothDriverNode.advertise(pubDebug);
 
