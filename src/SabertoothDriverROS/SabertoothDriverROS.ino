@@ -205,9 +205,9 @@ ros::Subscriber<command2ros::ManualCommand> commandSubscriber("ManualCommand", &
 
 ros::Subscriber<command2ros::ManualCommand> setActualArticulationSubscriber("SetActualArticulationValues", &setActualArticulationValues);
 
-ros::Subscriber<std_msgs::Int16> conveyorSubscriber("ConveyorCommand", &newConveyorCommandCallback);
+ros::Subscriber<std_msgs::Int16> conveyorSubscriber("TransportConveyorCommand", &newConveyorCommandCallback);
 
-ros::Subscriber<std_msgs::Int16> winchSubscriber("ConveyorCommand", &newWinchCommandCallback);
+ros::Subscriber<std_msgs::Int16> winchSubscriber("TransportWinchCommand", &newWinchCommandCallback);
 
 
 // Print error message to "sabertooth_debugger" topic
@@ -906,7 +906,7 @@ void loop(){
       stopMovementMotors();
     }
   }
-
+  
   pubwheelStatus.publish(&wheelStatus);// current rotation data for each wheel. 
 
   //Sync with ROS
