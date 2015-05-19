@@ -27,6 +27,9 @@
 //<---------------- Set Up ------------------------------->
 command2ros::ExcavatorCommand excavatorStatus;
 
+// set up the default values for the current excavator
+// settings (drive speed/duration, excavate speed/duration,
+// bucket height, conveyor speed/duruation)
 void setupExcavatorStatus(){
   excavatorStatus.drive_speed = 0;
   excavatorStatus.drive_duration = 0;
@@ -35,7 +38,6 @@ void setupExcavatorStatus(){
   excavatorStatus.excavation_height = 50;
   excavatorStatus.e_stop = false;
 }
-
 
 //<---------------- Bucket Wheel Actuation --------------->
 const int ERROR_OUT_OF_RANGE = - 1;
@@ -55,7 +57,6 @@ int currentSteps = FULL_STEPS / 2; //TODO
 
 //variable which disables all motor movement when set to TRUE.
 boolean e_stop = false;
-
 
 
 //<----------------- Excavator State machine ------------->
@@ -79,10 +80,10 @@ const char CONVEYOR_SPEED = 60;
 int currentStatus = STOPPED;
 int currentConveyorStatus = STOPPED;
 
-
 unsigned long driveStopTime = 0;
 int conveyorRotationTime = 0;
 long conveyorStopTime = 0;
+int bucketRotationTime = 0;
 long bucketStopTime = 0;
 
 //<---------------------- ROS variables ------------------->
@@ -111,11 +112,11 @@ void print(char* errorMsg){
 }
 
 //
-// ROS Subsribers
+// ROS Subscribers
 //
 command2ros::ExcavatorCommand currentExcavatorCommand;
 
-void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualCommand)
+void newExcavatorCommandCallback(const command2ros::ExcavatorCommand &newManualCommand)
 {
   currentExcavatorCommand.drive_speed = newManualCommand.drive_speed;
   currentExcavatorCommand.drive_duration = newManualCommand.drive_duration;
@@ -135,6 +136,24 @@ void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualC
 }
 
 ros::Subscriber<command2ros::ExcavatorCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
+
+
+// Listen for new conveyor commands
+void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
+  if(newConveyorCommand.data != 0){
+    currentStatus = START_ROTATING_CONVEYOR;
+    conveyorRotationTime = newConveyorCommand.data;
+  }
+}
+ros::Subscriber<std_msgs::Int16> conveyorSubscriber("ExcavatorConveyorCommand", &newConveyorCommandCallback);
+
+// Reset the current position of the bucketwheel
+void setActualStepCountCallback(const std_msgs::Int16& newConveyorCommand){
+  currentSteps = newConveyorCommand.data;
+}
+ros::Subscriber<std_msgs::Int16> setActualStepCount("SetActualStepCount", &setActualStepCountCallback);
+
+
 
 
 void stopMovementMotors()
@@ -494,6 +513,8 @@ void setup()
   // Initialize ROS stuff
   excavatorNode.initNode();
   excavatorNode.subscribe(commandSubscriber);
+  excavatorNode.subscribe(conveyorSubscriber);
+  excavatorNode.subscribe(setActualStepCount);
   setupExcavatorStatus();
 
   pinMode(DIRECTION_PIN, OUTPUT);
@@ -523,6 +544,18 @@ void loop()
     //TODO: This will never happen right now, may want for competition though
     return;
   } 
+  
+  if(currentConveyorStatus == START_ROTATING_CONVEYOR){
+    conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
+    driveConveyor();
+    currentConveyorStatus = ROTATING_CONVEYOR;
+  }
+  
+  if(currentConveyorStatus == ROTATING_CONVEYOR){
+    if(millis() >= conveyorStopTime){
+      stopConveyor();
+    }
+  }
 
   if (currentStatus == START_DRIVING) {
     print("current status: start_driving");
@@ -576,7 +609,7 @@ void loop()
   }
 
   if(currentConveyorStatus == START_ROTATING_CONVEYOR){
-    conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
+    conveyorStopTime = millis() + (long)currentConveyorCommand.duration*1000;   
     driveConveyor();
     currentConveyorStatus = ROTATING_CONVEYOR;
   }
