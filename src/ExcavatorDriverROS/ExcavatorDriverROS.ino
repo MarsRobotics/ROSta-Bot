@@ -1,25 +1,40 @@
 /* BucketWheelActuationDriver
-Authors: Derek Schumacher, Fatima Dominguez, Jaimiey Sears
-Begins by assuming the bucket wheel is at its lowest point (100%)
-The user can specify a percentage to actuate to (0-100%)
-The circuit uses HSI power screws and Microstep Driver- M6128 :
-DIP Switch: [111001] (1 = down, 0 = up)
-[current: 1.25; Microstep = 1 (Full-step)]
-Send an 's' or 'S' to e-stop screw movement
-The wiring scheme for the HSI power screws:
-Red (A+)
-Red/White (A-)
-Green (B+)
-Green/white (B-)
-PUL+ (pin 9)
-DIR+ (pin 8)
-PUL- and DIR- grounded
-ENA+ connected to ground
-ENA- connected to pin 10 (+5V when turning, otherwise 0V)
-*/
+ Authors: Derek Schumacher, Fatima Dominguez, Jaimiey Sears
+ Begins by assuming the bucket wheel is at its lowest point (100%)
+ The user can specify a percentage to actuate to (0-100%)
+ The circuit uses HSI power screws and Microstep Driver- M6128 :
+ DIP Switch: [111001] (1 = down, 0 = up)
+ [current: 1.25; Microstep = 1 (Full-step)]
+ Send an 's' or 'S' to e-stop screw movement
+ The wiring scheme for the HSI power screws:
+ Red (A+)
+ Red/White (A-)
+ Green (B+)
+ Green/white (B-)
+ PUL+ (pin 9)
+ DIR+ (pin 8)
+ PUL- and DIR- grounded
+ ENA+ connected to ground
+ ENA- connected to pin 10 (+5V when turning, otherwise 0V)
+ */
 
-//#include <ros.h>
+#include <ros.h>
 #include "ExcavatorDriverROS.h"
+#include <command2ros/ExcavatorCommand.h>
+#include <std_msgs/String.h>
+
+
+//<---------------- Set Up ------------------------------->
+command2ros::ExcavatorCommand excavatorStatus;
+
+void setupExcavatorStatus(){
+  excavatorStatus.drive_speed = 0;
+  excavatorStatus.drive_duration = 0;
+  excavatorStatus.excavate_speed = 0;
+  excavatorStatus.excavate_duration = 0;
+  excavatorStatus.excavation_height = 50;
+  excavatorStatus.e_stop = false;
+}
 
 
 //<---------------- Bucket Wheel Actuation --------------->
@@ -41,14 +56,20 @@ int currentSteps = FULL_STEPS / 2; //TODO
 //variable which disables all motor movement when set to TRUE.
 boolean e_stop = false;
 
+
+
 //<----------------- Excavator State machine ------------->
 const int STOPPED = 0;
-const int READY_TO_DRIVE = 1;
-const int DRIVING = 2;
-const int READY_TO_DIG = 3;
-const int DIGGING =  4;
-const int READY_TO_CONVEY = 5;
-const int CONVEYING = 6;
+const int START_DRIVING = 1;
+const int IS_DRIVING = 2;
+const int START_ACTUATING = 3;
+const int ACTUATING =  4;
+const int START_DIGGING = 5;
+const int IS_DIGGING = 6;
+const int START_ROTATING_CONVEYOR = 7;
+const int ROTATING_CONVEYOR = 8;
+const int E_STOPPED = 9;
+
 
 const int DRIVE_SPEED = 20;
 const char ROTATION_SPEED = 20;
@@ -56,13 +77,16 @@ const char BUCKET_SPEED = 20;
 const char CONVEYOR_SPEED = 60;
 
 int currentStatus = STOPPED;
-unsigned long driveUntilTime = 0;
-int conveyorRotationTime = 0;
-long conveyorStopTime = 0;
 int currentConveyorStatus = STOPPED;
 
+
+unsigned long driveStopTime = 0;
+int conveyorRotationTime = 0;
+long conveyorStopTime = 0;
+long bucketStopTime = 0;
+
 //<---------------------- ROS variables ------------------->
-/*
+
 //
 // ROS Node Initialization
 //
@@ -73,8 +97,8 @@ ros::NodeHandle excavatorNode;
 //
 
 //Sample status publisher
-//command2ros::ExcavatorCommand excavatorTarget;
-//ros::Publisher pubexcavatorStatus("???", &excavatorTarget);
+command2ros::ExcavatorCommand excavatorTarget;
+ros::Publisher pubexcavatorStatus("excavator_status", &excavatorTarget);
 
 //Publisher to print debug statements
 std_msgs::String debugMsg;
@@ -89,38 +113,36 @@ void print(char* errorMsg){
 //
 // ROS Subsribers
 //
-ros::Subscriber<command2ros::ExcavatorCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
-command2ros::ExcavatorCommand lastExcavatorCommand;
+command2ros::ExcavatorCommand currentExcavatorCommand;
 
 void newExcavatorCommandCallback(const command2ros::ExcavatorCommand& newManualCommand)
 {
- lastExcavatorCommand.fl_drive_speed = newManualCommand.fl_drive_speed;
- lastExcavatorCommand.fr_drive_speed = newManualCommand.fr_drive_speed;
- lastExcavatorCommand.bl_drive_speed = newManualCommand.bl_drive_speed;
- lastExcavatorCommand.br_drive_speed = newManualCommand.br_drive_speed;
- lastExcavatorCommand.drive_duration = newManualCommand.drive_duration;
- lastExcavatorCommand.e_stop = newManualCommand.e_stop;
- if(lastExcavatorCommand.e_stop)
- {
-  stopAllMotors();
-  currentStatus = STOPPED;
- }
- else
- {
-   stopAllMotors();
-   currentStatus = READY_TO_DRIVE;
- }
+  currentExcavatorCommand.drive_speed = newManualCommand.drive_speed;
+  currentExcavatorCommand.drive_duration = newManualCommand.drive_duration;
+  currentExcavatorCommand.excavate_speed = newManualCommand.excavate_speed;
+  currentExcavatorCommand.excavation_height = newManualCommand.excavation_height;
+  currentExcavatorCommand.e_stop = newManualCommand.e_stop;
+  if(currentExcavatorCommand.e_stop)
+  {
+    stopMovementMotors();
+    currentStatus = STOPPED;
+  }
+  else
+  {
+    stopMovementMotors();
+    currentStatus = START_DRIVING;
+  }
 }
 
-//Inbound wheel command
-//command2ros::ExcavatorCommand wheelTarget;
-*/
+ros::Subscriber<command2ros::ExcavatorCommand> commandSubscriber("ExcavatorCommand", &newExcavatorCommandCallback);
 
-void stopAllMotors()
+
+void stopMovementMotors()
 {
   for (int motorID = 0; motorID < NUM_EXCAVATOR_MOTORS; ++motorID) {
     driveForwards(motorID, 0);
   }
+  currentExcavatorCommand.drive_speed = 0;
 }
 
 /**
@@ -196,21 +218,42 @@ void helpDrive(char motorID, char speed)
 }
 
 // Function to drive the wheels
-/*
-void driveTires()
+void driveAllMotors()
 {
- if(currentStatus == READY_TO_DRIVE)
- {
-   helpDrive(FRONT_LEFT_DRIVE_MOTOR_ID, lastExcavatorCommand.fl_drive_speed);
-   helpDrive(FRONT_RIGHT_DRIVE_MOTOR_ID, lastExcavatorCommand.fr_drive_speed);
-   helpDrive(BACK_LEFT_DRIVE_MOTOR_ID, lastExcavatorCommand.bl_drive_speed);
-   helpDrive(BACK_RIGHT_DRIVE_MOTOR_ID, lastExcavatorCommand.br_drive_speed);
-   currentStatus = DRIVING;
- }
+  if(currentStatus == START_DRIVING)
+  {
+    helpDrive(FRONT_LEFT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
+    helpDrive(FRONT_RIGHT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
+    helpDrive(BACK_LEFT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
+    helpDrive(BACK_RIGHT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
+    excavatorStatus.drive_speed = currentExcavatorCommand.drive_speed;
+    currentStatus = IS_DRIVING;
+  }
 }
-*/
+
 
 //<---------------CODE TO SPIN BUCKET WHEEL---------------->
+void rotateBucketClockwise(){
+  for (int i = 0; i < 4; ++i)
+  {
+    driveClockwise(i, BUCKET_SPEED);
+  }
+}
+
+void rotateBucketCounterclockwise(){
+  for (int i = 0; i < 4; ++i)
+  {
+    driveCounterclockwise(i, BUCKET_SPEED);
+  }
+}
+
+void stopBucketWheel(){
+  for (int i = 0; i < 4; ++i)
+  {
+    driveClockwise(i, 0);
+  }
+}
+
 /**
  * Drives a given bucket-wheel motor at a given speed in a clockwise direction
  *
@@ -260,6 +303,16 @@ void driveCounterclockwise(char motorID, char speed) {
 
 
 //<---------------CODE TO ACTUATE BUCKET WHEEL---------------->
+// checks whether we need to actuate the bucket wheel
+// returns false if we are within +/- 3 steps
+bool needsToActuate(int percent){
+  int stepsToMove = int(-(toPercent(currentSteps) - percent) / 100.0 * FULL_STEPS);
+  if(stepsToMove <= 3 || stepsToMove >= -3){
+    return false;
+  }
+  return true; 
+}
+
 //moves to the given percent from the current position
 int moveToPercent(int percent) {
   //error check
@@ -318,12 +371,12 @@ void interrupt() {
   if (Serial.available()) {
     char command = Serial.read();
     switch (command) {
-      case 's':
-        e_stop = true;
-        break;
-      case 'S':
-        e_stop = true;
-        break;
+    case 's':
+      e_stop = true;
+      break;
+    case 'S':
+      e_stop = true;
+      break;
     }
   }
 }
@@ -344,6 +397,10 @@ void stopConveyor(){
   driveCounterclockwise(CONVEYOR_MOTOR_ID, 0);
   currentConveyorStatus = STOPPED;
 }
+
+
+
+
 
 
 
@@ -379,7 +436,7 @@ void unitTestDrive() {
   }
   delay(4000);
 
-  stopAllMotors();
+  stopMovementMotors();
 }
 
 // Spins the buketwheel clockwise, then counterclockwise
@@ -435,22 +492,20 @@ void delaySeconds(unsigned int n){
 void setup()
 {
   // Initialize ROS stuff
-  /*
   excavatorNode.initNode();
   excavatorNode.subscribe(commandSubscriber);
-  */
+  setupExcavatorStatus();
 
   pinMode(DIRECTION_PIN, OUTPUT);
   pinMode(PULSE_PIN, OUTPUT);
   pinMode(ENABLE, OUTPUT);
-  
+
   // Initialize the serial connection to the saberteeth
   Serial3.begin(9600);
-  //Serial.begin(9600);
 
   // Stop all the motors, if they were moving.
   // This must be done AFTER stopping all the motors.
-  stopAllMotors();
+  stopMovementMotors();
 
   //<------ Run Unittests Here ------>
   unitTest();
@@ -462,41 +517,128 @@ void setup()
 }
 
 void loop()
-{
-  /*
-  //Currently stopped, don't do anything.
-  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
-  switch (currentStatus)
-  {
-    case READY_TO_DRIVE:
-      driveTires();
-      driveUntilTime = millis() + (long)lastExcavatorCommand.drive_duration;
-      break;
-    case DRIVING:
-      if (millis() > driveUntilTime)
-      {
-        stopAllMotors();
-        // TODO: Change this to excavating, if necessary.
-        currentStatus = STOPPED;
-      }
-      break;
+{  
+  //We are E-Stopped, don't respond to future commands.
+  if (currentStatus == E_STOPPED) {
+    //TODO: This will never happen right now, may want for competition though
+    return;
+  } 
 
-    case STOPPED:
-    //  // fall through
-    default:
-      // TODO: Convey / Dig
-      break;
+  if (currentStatus == START_DRIVING) {
+    print("current status: start_driving");
+    //Set stop drive time
+    driveStopTime = millis() + (long)currentExcavatorCommand.drive_duration*1000;
+
+    //Send drive start command
+    driveAllMotors();
+
+    currentStatus = IS_DRIVING;
   }
 
-  //TODO: Publish sensor / state data?
+  if (currentStatus == IS_DRIVING) {
+    if (millis() >= driveStopTime) {
+      print("over time limit: stop driving");
+      stopMovementMotors();
+      currentStatus = ACTUATING;
+    }
+  }
+
+  if (currentStatus == ACTUATING) {
+    if(needsToActuate(currentExcavatorCommand.excavation_height)){
+       moveToPercent(currentExcavatorCommand.excavation_height);
+       excavatorStatus.excavate_speed = toPercent(currentSteps);
+    }
+    else{
+       currentStatus = START_DIGGING;
+    }
+  }
+
+  if (currentStatus == START_DIGGING) {
+    if(currentExcavatorCommand.excavate_speed == 0){
+      stopBucketWheel();
+    }
+    else if(currentExcavatorCommand.excavate_speed < 0){
+      bucketStopTime = millis() + (long)abs(bucketStopTime);   
+      rotateBucketCounterclockwise();
+      excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
+    }
+    else if(currentExcavatorCommand.excavate_speed > 0){
+      bucketStopTime = millis() + (long)abs(bucketStopTime);   
+      rotateBucketClockwise();
+      excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
+    }
+  }
+
+  if (currentStatus == IS_DIGGING) {
+    if(millis() >= bucketStopTime){
+      stopBucketWheel();
+    }
+  }
+
+  if(currentConveyorStatus == START_ROTATING_CONVEYOR){
+    conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
+    driveConveyor();
+    currentConveyorStatus = ROTATING_CONVEYOR;
+  }
+
+  if(currentConveyorStatus == ROTATING_CONVEYOR){
+    if(millis() >= conveyorStopTime){
+      stopConveyor();
+    }
+  }
+
+  //Currently stopped, don't do anything.
+  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
+  if (currentStatus == STOPPED) {
+    // do nothing
+  }
+
+
+  pubexcavatorStatus.publish(&excavatorStatus);// current rotation data for each wheel. 
+
   //Sync with ROS
   excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
 
   //Delay so we don't overload any serial buffers
-  for (int i = 0; i < 7; i++) {
+  for(int i = 0; i < 7; i++){
     delayMicroseconds(15000);
   }
-  */
+
+  /*
+  //Currently stopped, don't do anything.
+   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
+   switch (currentStatus)
+   {
+   case READY_TO_DRIVE:
+   driveTires();
+   driveUntilTime = millis() + (long)currentExcavatorCommand.drive_duration;
+   break;
+   case DRIVING:
+   if (millis() > driveUntilTime)
+   {
+   stopAllMotors();
+   // TODO: Change this to excavating, if necessary.
+   currentStatus = STOPPED;
+   }
+   break;
+   
+   case STOPPED:
+   //  // fall through
+   default:
+   // TODO: Convey / Dig
+   break;
+   }
+   
+   //TODO: Publish sensor / state data?
+   //Sync with ROS
+   excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
+   
+   //Delay so we don't overload any serial buffers
+   for (int i = 0; i < 7; i++) {
+   delayMicroseconds(15000);
+   }
+   */
 }
+
 
 
