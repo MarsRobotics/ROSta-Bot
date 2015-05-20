@@ -22,6 +22,7 @@
 #include "ExcavatorDriverROS.h"
 #include <command2ros/ExcavatorCommand.h>
 #include <std_msgs/String.h>
+#include <std_msgs/Int16.h>
 
 
 //<---------------- Set Up ------------------------------->
@@ -252,17 +253,17 @@ void driveAllMotors()
 
 
 //<---------------CODE TO SPIN BUCKET WHEEL---------------->
-void rotateBucketClockwise(){
+void rotateBucketClockwise(int bucketSpeed){
   for (int i = 0; i < 4; ++i)
   {
-    driveClockwise(i, BUCKET_SPEED);
+    driveClockwise(i, bucketSpeed);
   }
 }
 
-void rotateBucketCounterclockwise(){
+void rotateBucketCounterclockwise(int bucketSpeed){
   for (int i = 0; i < 4; ++i)
   {
-    driveCounterclockwise(i, BUCKET_SPEED);
+    driveCounterclockwise(i, bucketSpeed);
   }
 }
 
@@ -529,11 +530,11 @@ void setup()
   stopMovementMotors();
 
   //<------ Run Unittests Here ------>
-  unitTest();
+  //unitTest();
   //unitTestDrive();
   //unitTestBucketWheelSpin();
   //unitTestBucketWheelActuate();
-  unitTestConveyor();
+  //unitTestConveyor();
   //stopAllMotors();
 }
 
@@ -545,12 +546,19 @@ void loop()
     return;
   } 
   
+  //Currently stopped, don't do anything.
+  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
+  if (currentStatus == STOPPED) {
+    // do nothing
+  }
+
+  
   if(currentConveyorStatus == START_ROTATING_CONVEYOR){
-    conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
+    conveyorStopTime = millis() + (long)conveyorRotationTime*1000;   
     driveConveyor();
     currentConveyorStatus = ROTATING_CONVEYOR;
   }
-  
+
   if(currentConveyorStatus == ROTATING_CONVEYOR){
     if(millis() >= conveyorStopTime){
       stopConveyor();
@@ -591,13 +599,13 @@ void loop()
       stopBucketWheel();
     }
     else if(currentExcavatorCommand.excavate_speed < 0){
-      bucketStopTime = millis() + (long)abs(bucketStopTime);   
-      rotateBucketCounterclockwise();
+      bucketStopTime = millis() + (long)(currentExcavatorCommand.excavate_duration);   
+      rotateBucketCounterclockwise(-currentExcavatorCommand.excavate_speed);
       excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
     }
     else if(currentExcavatorCommand.excavate_speed > 0){
-      bucketStopTime = millis() + (long)abs(bucketStopTime);   
-      rotateBucketClockwise();
+      bucketStopTime = millis() + (long)(currentExcavatorCommand.excavate_duration);   
+      rotateBucketClockwise(currentExcavatorCommand.excavate_speed);
       excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
     }
   }
@@ -608,25 +616,6 @@ void loop()
     }
   }
 
-  if(currentConveyorStatus == START_ROTATING_CONVEYOR){
-    conveyorStopTime = millis() + (long)currentConveyorCommand.duration*1000;   
-    driveConveyor();
-    currentConveyorStatus = ROTATING_CONVEYOR;
-  }
-
-  if(currentConveyorStatus == ROTATING_CONVEYOR){
-    if(millis() >= conveyorStopTime){
-      stopConveyor();
-    }
-  }
-
-  //Currently stopped, don't do anything.
-  // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
-  if (currentStatus == STOPPED) {
-    // do nothing
-  }
-
-
   pubexcavatorStatus.publish(&excavatorStatus);// current rotation data for each wheel. 
 
   //Sync with ROS
@@ -636,41 +625,6 @@ void loop()
   for(int i = 0; i < 7; i++){
     delayMicroseconds(15000);
   }
-
-  /*
-  //Currently stopped, don't do anything.
-   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
-   switch (currentStatus)
-   {
-   case READY_TO_DRIVE:
-   driveTires();
-   driveUntilTime = millis() + (long)currentExcavatorCommand.drive_duration;
-   break;
-   case DRIVING:
-   if (millis() > driveUntilTime)
-   {
-   stopAllMotors();
-   // TODO: Change this to excavating, if necessary.
-   currentStatus = STOPPED;
-   }
-   break;
-   
-   case STOPPED:
-   //  // fall through
-   default:
-   // TODO: Convey / Dig
-   break;
-   }
-   
-   //TODO: Publish sensor / state data?
-   //Sync with ROS
-   excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
-   
-   //Delay so we don't overload any serial buffers
-   for (int i = 0; i < 7; i++) {
-   delayMicroseconds(15000);
-   }
-   */
 }
 
 
