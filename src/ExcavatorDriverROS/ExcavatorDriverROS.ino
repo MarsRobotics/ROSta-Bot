@@ -162,7 +162,7 @@ void stopMovementMotors()
   for (int motorID = 0; motorID < NUM_EXCAVATOR_MOTORS; ++motorID) {
     driveForwards(motorID, 0);
   }
-  currentExcavatorCommand.drive_speed = 0;
+  excavatorStatus.drive_speed = 0;
 }
 
 /**
@@ -221,34 +221,25 @@ void driveBackwards(char motorID, char speed) {
   delayMicroseconds(1000);
 }
 
-
-
-
-// Function that takes a SIGNED speed value and converts it to an UNSIGNED drive command.
-void helpDrive(char motorID, char speed)
-{
-  if (speed < 0)
-  {
-    driveBackwards(motorID, -speed);
-  }
-  else
-  {
-    driveForwards(motorID, speed);
-  }
-}
-
 // Function to drive the wheels
 void driveAllMotors()
 {
-  if(currentStatus == START_DRIVING)
-  {
-    helpDrive(FRONT_LEFT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
-    helpDrive(FRONT_RIGHT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
-    helpDrive(BACK_LEFT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
-    helpDrive(BACK_RIGHT_DRIVE_MOTOR_ID, currentExcavatorCommand.drive_speed);
-    excavatorStatus.drive_speed = currentExcavatorCommand.drive_speed;
-    currentStatus = IS_DRIVING;
+  if (currentExcavatorCommand.drive_speed < 0){
+    for (int i = 0; i < 4; ++i)
+    {
+       driveForwards(i, -currentExcavatorCommand.drive_speed);
+       excavatorStatus.drive_speed = currentExcavatorCommand.drive_speed;
+    } 
   }
+  else{
+    for (int i = 0; i < 4; ++i)
+    {
+      driveBackwards(i, currentExcavatorCommand.drive_speed);
+      excavatorStatus.drive_speed = currentExcavatorCommand.drive_speed;
+    } 
+  }
+
+  currentStatus = IS_DRIVING;
 }
 
 
@@ -516,6 +507,8 @@ void setup()
   excavatorNode.subscribe(commandSubscriber);
   excavatorNode.subscribe(conveyorSubscriber);
   excavatorNode.subscribe(setActualStepCount);
+  excavatorNode.advertise(pubexcavatorStatus);
+  excavatorNode.advertise(pubDebug);
   setupExcavatorStatus();
 
   pinMode(DIRECTION_PIN, OUTPUT);
@@ -545,14 +538,14 @@ void loop()
     //TODO: This will never happen right now, may want for competition though
     return;
   } 
-  
+
   //Currently stopped, don't do anything.
   // ASSUMES the robot is stopped when currentStatus is set to STOPPED.
   if (currentStatus == STOPPED) {
     // do nothing
   }
 
-  
+
   if(currentConveyorStatus == START_ROTATING_CONVEYOR){
     conveyorStopTime = millis() + (long)conveyorRotationTime*1000;   
     driveConveyor();
@@ -586,11 +579,11 @@ void loop()
 
   if (currentStatus == ACTUATING) {
     if(needsToActuate(currentExcavatorCommand.excavation_height)){
-       moveToPercent(currentExcavatorCommand.excavation_height);
-       excavatorStatus.excavate_speed = toPercent(currentSteps);
+      moveToPercent(currentExcavatorCommand.excavation_height);
+      excavatorStatus.excavate_speed = toPercent(currentSteps);
     }
     else{
-       currentStatus = START_DIGGING;
+      currentStatus = START_DIGGING;
     }
   }
 
@@ -626,6 +619,7 @@ void loop()
     delayMicroseconds(15000);
   }
 }
+
 
 
 
