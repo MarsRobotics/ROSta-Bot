@@ -36,7 +36,7 @@ void setupExcavatorStatus(){
   excavatorStatus.drive_duration = 0;
   excavatorStatus.excavate_speed = 0;
   excavatorStatus.excavate_duration = 0;
-  excavatorStatus.excavation_height = 50;
+  excavatorStatus.excavation_height = 100;
   excavatorStatus.e_stop = false;
 }
 
@@ -54,7 +54,7 @@ int ENABLE = 10;
 int desiredPercent = 0;
 
 int DELAY = 10;
-int currentSteps = FULL_STEPS / 2; //TODO
+int currentSteps = FULL_STEPS; //TODO
 
 //variable which disables all motor movement when set to TRUE.
 boolean e_stop = false;
@@ -75,7 +75,7 @@ const int E_STOPPED = 9;
 
 const int DRIVE_SPEED = 20;
 const char ROTATION_SPEED = 20;
-const char BUCKET_SPEED = 20;
+const char BUCKET_SPEED = 40;
 const char CONVEYOR_SPEED = 60;
 
 int currentStatus = STOPPED;
@@ -122,6 +122,7 @@ void newExcavatorCommandCallback(const command2ros::ExcavatorCommand &newManualC
   currentExcavatorCommand.drive_speed = newManualCommand.drive_speed;
   currentExcavatorCommand.drive_duration = newManualCommand.drive_duration;
   currentExcavatorCommand.excavate_speed = newManualCommand.excavate_speed;
+  currentExcavatorCommand.excavate_duration = newManualCommand.excavate_duration;
   currentExcavatorCommand.excavation_height = newManualCommand.excavation_height;
   currentExcavatorCommand.e_stop = newManualCommand.e_stop;
   if(currentExcavatorCommand.e_stop)
@@ -149,10 +150,11 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
 ros::Subscriber<std_msgs::Int16> conveyorSubscriber("ExcavatorConveyorCommand", &newConveyorCommandCallback);
 
 // Reset the current position of the bucketwheel
-void setActualStepCountCallback(const std_msgs::Int16& newConveyorCommand){
-  currentSteps = newConveyorCommand.data;
+void setActualStepCountCallback(const std_msgs::Int16& actualPercent){
+  currentSteps = toSteps(actualPercent.data);
+  excavatorStatus.excavation_height = actualPercent.data;
 }
-ros::Subscriber<std_msgs::Int16> setActualStepCount("SetActualStepCount", &setActualStepCountCallback);
+ros::Subscriber<std_msgs::Int16> setActualStepCount("SetActualPercentage", &setActualStepCountCallback);
 
 
 
@@ -312,13 +314,16 @@ void driveCounterclockwise(char motorID, char speed) {
   delayMicroseconds(1000);
 }
 
-
 //<---------------CODE TO ACTUATE BUCKET WHEEL---------------->
+int toSteps(int percent){
+  return (percent / 100.0) * FULL_STEPS;
+}
+
 // checks whether we need to actuate the bucket wheel
 // returns false if we are within +/- 3 steps
 bool needsToActuate(int percent){
   int stepsToMove = int(-(toPercent(currentSteps) - percent) / 100.0 * FULL_STEPS);
-  if(stepsToMove <= 3 || stepsToMove >= -3){
+  if(stepsToMove <= 3 && stepsToMove >= -3){
     return false;
   }
   return true; 
@@ -379,6 +384,7 @@ void actuate(int steps) {
 
 //used to read any commands that have been recieved
 void interrupt() {
+  /*
   if (Serial.available()) {
     char command = Serial.read();
     switch (command) {
@@ -390,6 +396,7 @@ void interrupt() {
       break;
     }
   }
+  */
 }
 
 
@@ -452,32 +459,25 @@ void unitTestDrive() {
 
 // Spins the buketwheel clockwise, then counterclockwise
 void unitTestBucketWheelSpin() {
-  for (int i = 0; i < 4; ++i)
-  {
-    driveClockwise(i, BUCKET_SPEED);
-  }
   delay(4000);
-
   for (int i = 0; i < 4; ++i)
   {
     driveCounterclockwise(i, BUCKET_SPEED);
   }
-
   delay(4000);
 
-  for (int i = 0; i < 4; ++i)
-  {
-    driveClockwise(i, 0);
-  }
+  
   delay(600);
 }
 
 // Moves the bucket wheel up and down
 void unitTestBucketWheelActuate() {
-  moveToPercent(40);
   delay(4000);
-  moveToPercent(50);
-  delay(600);
+  delay(4000);
+  moveToPercent(27);
+  //delay(4000);
+  //moveToPercent(97);
+  delay(6000);
 }
 
 // Moves the conveyor forwards and backwards
@@ -528,7 +528,7 @@ void setup()
   //unitTestBucketWheelSpin();
   //unitTestBucketWheelActuate();
   //unitTestConveyor();
-  //stopAllMotors();
+  //stopMovementMotors();
 }
 
 void loop()
@@ -573,44 +573,52 @@ void loop()
     if (millis() >= driveStopTime) {
       print("over time limit: stop driving");
       stopMovementMotors();
-      currentStatus = ACTUATING;
+      currentStatus = START_ACTUATING;
     }
   }
 
-  if (currentStatus == ACTUATING) {
+  if (currentStatus == START_ACTUATING) {
+    print("Start actuating");
     if(needsToActuate(currentExcavatorCommand.excavation_height)){
+      print("Needs to actuate");
       moveToPercent(currentExcavatorCommand.excavation_height);
-      excavatorStatus.excavate_speed = toPercent(currentSteps);
+      excavatorStatus.excavation_height = toPercent(currentSteps);
     }
     else{
+      print("don't need to actuate, proceed to digging");
       currentStatus = START_DIGGING;
     }
   }
 
   if (currentStatus == START_DIGGING) {
+    print("Start digging");
     if(currentExcavatorCommand.excavate_speed == 0){
       stopBucketWheel();
+      currentStatus = STOPPED;
     }
     else if(currentExcavatorCommand.excavate_speed < 0){
-      bucketStopTime = millis() + (long)(currentExcavatorCommand.excavate_duration);   
+      bucketStopTime = millis() + (long)currentExcavatorCommand.excavate_duration * 1000;   
       rotateBucketCounterclockwise(-currentExcavatorCommand.excavate_speed);
       excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
+      currentStatus = IS_DIGGING;
     }
     else if(currentExcavatorCommand.excavate_speed > 0){
-      bucketStopTime = millis() + (long)(currentExcavatorCommand.excavate_duration);   
+      bucketStopTime = millis() + (long)currentExcavatorCommand.excavate_duration * 1000;   
       rotateBucketClockwise(currentExcavatorCommand.excavate_speed);
       excavatorStatus.excavate_speed = currentExcavatorCommand.excavate_speed;
+      currentStatus = IS_DIGGING;
     }
   }
 
   if (currentStatus == IS_DIGGING) {
     if(millis() >= bucketStopTime){
+      print("stop digging");
       stopBucketWheel();
+      currentStatus = STOPPED;
     }
   }
 
   pubexcavatorStatus.publish(&excavatorStatus);// current rotation data for each wheel. 
-
   //Sync with ROS
   excavatorNode.spinOnce(); // Check for subscriber update/update timestamp
 
