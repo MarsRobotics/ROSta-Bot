@@ -194,8 +194,20 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
 
 void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
   if(newWinchCommand.data != 0){
-    currentWinchStatus = START_ROTATING_WINCH;
-    winchRotationTime = newWinchCommand.data;
+    //currentWinchStatus = START_ROTATING_WINCH;
+    //winchRotationTime = newWinchCommand.data;
+    
+     if( newWinchCommand.data > 0) {
+       driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
+       delaySeconds(newWinchCommand.data);
+       driveClockwise(WINCH_MOTOR_ID, 0);
+     }
+     else {
+       driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
+       delaySeconds(newWinchCommand.data);
+       driveCounterclockwise(WINCH_MOTOR_ID, 0);
+     }
+     
   }
 }
 
@@ -207,7 +219,7 @@ ros::Subscriber<command2ros::ManualCommand> setActualArticulationSubscriber("Set
 
 ros::Subscriber<std_msgs::Int16> conveyorSubscriber("TransportConveyorCommand", &newConveyorCommandCallback);
 
-ros::Subscriber<std_msgs::Int16> winchSubscriber("TransportWinchCommand", &newWinchCommandCallback);
+ros::Subscriber<std_msgs::Int16> bSubscriber("TransportWinchCommand", &newWinchCommandCallback);
 
 
 // Print error message to "sabertooth_debugger" topic
@@ -698,7 +710,7 @@ void unitTestConveyor()
 void unitTestWinch()
 {
   // Test the winch: 
-  // 2s up (clockwise), 2s down (counterclockwise).
+  // 2s up (clockwise), 2s down (counterclockwise). TODO: OUT OF DATE COMMENT
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
   delaySeconds(5);
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
