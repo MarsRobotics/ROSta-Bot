@@ -194,7 +194,7 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
 
 void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
   if(newWinchCommand.data != 0){
-    currentStatus = START_ROTATING_WINCH;
+    currentWinchStatus = START_ROTATING_WINCH;
     winchRotationTime = newWinchCommand.data;
   }
 }
@@ -852,7 +852,7 @@ void loop(){
   if(currentWinchStatus == START_ROTATING_WINCH){
     winchStopTime = millis() + (long)abs(winchRotationTime);   
     driveWinch();
-    currentWinchStatus = ROTATING_CONVEYOR;
+    currentWinchStatus = ROTATING_WINCH;
   }
   
   if(currentWinchStatus == ROTATING_WINCH){
