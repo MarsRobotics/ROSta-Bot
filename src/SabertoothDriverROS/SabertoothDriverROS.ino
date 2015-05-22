@@ -12,6 +12,7 @@
 #include <ros.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int16.h>
+#include <std_msgs/Float32.h>
 #include <command2ros/ManualCommand.h>
 #include <EncoderFL.h>
 #include <EncoderML.h>
@@ -192,18 +193,18 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
   }
 }
 
-void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
+void newWinchCommandCallback(const std_msgs::Float32& newWinchCommand){
     if(newWinchCommand.data == 0){
       driveClockwise(WINCH_MOTOR_ID, 0);
     }
     else if( newWinchCommand.data > 0) {
       driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-      delaySeconds(1);
+      delaySeconds(double(newWinchCommand.data));
       driveClockwise(WINCH_MOTOR_ID, 0);
     }
     else if(newWinchCommand.data < 0) {
       driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-      delaySeconds(newWinchCommand.data);
+      delaySeconds((double)newWinchCommand.data);
       driveCounterclockwise(WINCH_MOTOR_ID, 0);
     }
 }
@@ -216,7 +217,7 @@ ros::Subscriber<command2ros::ManualCommand> setActualArticulationSubscriber("Set
 
 ros::Subscriber<std_msgs::Int16> conveyorSubscriber("TransportConveyorCommand", &newConveyorCommandCallback);
 
-ros::Subscriber<std_msgs::Int16> winchSubscriber("TransportWinchCommand", &newWinchCommandCallback);
+ros::Subscriber<std_msgs::Float32> winchSubscriber("TransportWinchCommand", &newWinchCommandCallback);
 
 
 // Print error message to "sabertooth_debugger" topic
