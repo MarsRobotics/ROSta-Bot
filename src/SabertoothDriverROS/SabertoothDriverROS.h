@@ -136,10 +136,10 @@ const unsigned char MOTOR_COMMAND[15] = {
   
   
   // Motor speed constants
-  const unsigned char ARTICULATION_SPEED = 50;
+  const unsigned int ARTICULATION_SPEED = 50;
   // The articulation drive speed is 6260/7521 timmes the articulation speed.
   // Use longs for the math so we don't overflow (Arduino int is 16-bit, long is 32-bit).
-  const unsigned char ARTICULATION_DRIVE_SPEED = (char)((50L * 6260L) / 7521L);
+  //const unsigned int ARTICULATION_DRIVE_SPEED = (int)((50L * 6260L) / 7521L);
   
   // FUNCTIONS
 

@@ -199,12 +199,12 @@ void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
 
     if( newWinchCommand.data > 0) {
       driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-      delaySeconds(newWinchCommand.data);
+      delaySeconds((double)newWinchCommand.data);
       driveClockwise(WINCH_MOTOR_ID, 0);
     }
     else {
       driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-      delaySeconds(newWinchCommand.data);
+      delaySeconds((double)newWinchCommand.data);
       driveCounterclockwise(WINCH_MOTOR_ID, 0);
     }
 
@@ -320,7 +320,7 @@ void articulateAllWheels() {
   wheelArticulations[4] = wheelTarget.rl_articulation_angle;
   wheelArticulations[5] = wheelTarget.rr_articulation_angle;
 
-  // Algorithm: "A nondeterministic mergesort for Jaimiey" <3 
+  // Algorithm: "A nondeterministic-deterministic mergesort for Jaimiey" <3 
   boolean sorted = false;
   unsigned long tries = 0;
   while(!sorted) {
@@ -381,20 +381,20 @@ void articulateAllWheels() {
         // Articulate
         driveClockwise(wheelIds[i], ARTICULATION_SPEED);
         // drive the wheel
-        driveClockwise(wheelIds[i] - 6, ARTICULATION_DRIVE_SPEED);
+        driveClockwise(wheelIds[i] - 6, ARTICULATION_SPEED*ARTICULATION_DRIVE_SPEED);
       }
       else {
         // Articulate
         driveCounterclockwise(wheelIds[i], ARTICULATION_SPEED);
         // Drive the wheel
-        driveCounterclockwise(wheelIds[i] - 6, ARTICULATION_DRIVE_SPEED);
+        driveCounterclockwise(wheelIds[i] - 6, ARTICULATION_SPEED*ARTICULATION_DRIVE_SPEED);
       }
     }
   }
 
   // Delay the difference for each pair
   int last = wheelArticulations[0];
-  delaySeconds(wheelArticulations[0]);
+  delaySeconds((double)wheelArticulations[0]);
   for(int i = 1; i < 6; i++ ) {
     int diff = abs(wheelArticulations[i]) - abs(last);
     delaySeconds((double)diff);
@@ -413,7 +413,7 @@ void articulateAllWheels() {
     driveClockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds((int)wheelTarget.fl_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.fl_articulation_angle); 
     driveClockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
   }
@@ -421,7 +421,7 @@ void articulateAllWheels() {
     driveCounterclockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(FRONT_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.fl_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.fl_articulation_angle); 
     driveCounterclockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID,0); 
     driveCounterclockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
   }
@@ -435,7 +435,7 @@ void articulateAllWheels() {
     driveClockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
     driveClockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds((int)wheelTarget.fr_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.fr_articulation_angle); 
     driveClockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -444,7 +444,7 @@ void articulateAllWheels() {
     driveCounterclockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.fr_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.fr_articulation_angle); 
     driveCounterclockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID,0); 
     driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -459,7 +459,7 @@ void articulateAllWheels() {
     driveClockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds((int)wheelTarget.ml_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.ml_articulation_angle); 
 
     driveClockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
@@ -469,7 +469,7 @@ void articulateAllWheels() {
     driveCounterclockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.ml_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.ml_articulation_angle); 
 
     driveCounterclockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID,0);
     driveCounterclockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
@@ -486,7 +486,7 @@ void articulateAllWheels() {
     driveClockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
 
-    delaySeconds((int)wheelTarget.mr_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.mr_articulation_angle); 
     driveClockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -495,7 +495,7 @@ void articulateAllWheels() {
     driveCounterclockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.mr_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.mr_articulation_angle); 
     driveCounterclockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID,0);  
     driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -510,7 +510,7 @@ void articulateAllWheels() {
     driveClockwise(REAR_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds((int)wheelTarget.rl_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.rl_articulation_angle); 
     driveClockwise(REAR_LEFT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
 
@@ -519,7 +519,7 @@ void articulateAllWheels() {
     driveCounterclockwise(REAR_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(REAR_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.rl_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.rl_articulation_angle); 
     driveCounterclockwise(REAR_LEFT_ARTICULATION_MOTOR_ID,0); 
     driveCounterclockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
 
@@ -534,7 +534,7 @@ void articulateAllWheels() {
     driveClockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
     driveClockwise(REAR_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds((int)wheelTarget.rr_articulation_angle); 
+    delaySeconds((double)(int)wheelTarget.rr_articulation_angle); 
     driveClockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);
     driveClockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -543,7 +543,7 @@ void articulateAllWheels() {
     driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
     driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-    delaySeconds(-(int)wheelTarget.rr_articulation_angle); 
+    delaySeconds((double)-(int)wheelTarget.rr_articulation_angle); 
     driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);  
     driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
 
@@ -951,12 +951,12 @@ void unitTestConveyor()
 
   //driveClockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(3);
+  delaySeconds((double)3);
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
-  delaySeconds(2);
+  delaySeconds((double)2);
   //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(3);
+  delaySeconds((double)3);
   //driveCounterclockwise(LEFT_CONVEYOR_MOTOR_ID, 0);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);  
 }
@@ -968,7 +968,7 @@ void unitTestWinch()
   }
   // Test the winch: 
   driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-  delaySeconds(2);
+  delaySeconds((double)2);
   driveClockwise(WINCH_MOTOR_ID, 0);
 
   for(int j = 0; j < 300; j++) {
@@ -976,7 +976,7 @@ void unitTestWinch()
   }
 
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-  delaySeconds(4);
+  delaySeconds((double)4);
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
 
 }
@@ -1016,14 +1016,14 @@ void unitTest2(){
 void proofOfLife()
 {
   // Proof of life newspaper (5s)
-  delaySeconds(5);
+  delaySeconds((double)5);
   // Spin conveyor backwards (10s)
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(10);
+  delaySeconds((double)10);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
   // Lift the winch (25s)
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-  delaySeconds(25);
+  delaySeconds((double)25);
   driveClockwise(WINCH_MOTOR_ID, 0);
   // Drive forwards for 10s
   char driveSpeed = 20;
@@ -1033,7 +1033,7 @@ void proofOfLife()
   driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
   driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, driveSpeed);
   driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
-  delaySeconds(10);
+  delaySeconds((double)10);
   driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
   driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
   driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
@@ -1042,7 +1042,7 @@ void proofOfLife()
   driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
   // Spin conveyor forwards (20s)
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
-  delaySeconds(20);
+  delaySeconds((double)20);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
 
 }
