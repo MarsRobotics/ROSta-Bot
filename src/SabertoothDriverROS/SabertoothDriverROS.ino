@@ -87,7 +87,7 @@ bool motorInMotion[15];
 
 //Conveyor and winch system constants
 const char CONVEYOR_SPEED = 60;
-const char WINCH_SPEED_UP = 80;
+const char WINCH_SPEED_UP = 95;
 const char WINCH_SPEED_DOWN = 50;
 
 int conveyorRotationTime = 0;
@@ -131,7 +131,7 @@ void newManualCommandCallback(const command2ros::ManualCommand& newManualCommand
 {      
   //TODO: Do we need to stop the robot at this point, Sherry and Matt H say no
   print("start cb");
-    
+
   //Set articulation target values
   wheelTarget.fl_articulation_angle = newManualCommand.fl_articulation_angle;
   wheelTarget.ml_articulation_angle = newManualCommand.ml_articulation_angle;
@@ -180,7 +180,7 @@ void setActualArticulationValues(const command2ros::ManualCommand& articulationV
   wheelOffset.fr_articulation_angle = (int)(articulationValues.fr_articulation_angle - wheelStatus.fr_articulation_angle - wheelOffset.fr_articulation_angle);
   wheelOffset.mr_articulation_angle = (int)(articulationValues.mr_articulation_angle - wheelStatus.mr_articulation_angle - wheelOffset.mr_articulation_angle);
   wheelOffset.rr_articulation_angle = (int)(articulationValues.rr_articulation_angle - wheelStatus.rr_articulation_angle - wheelOffset.rr_articulation_angle);
-  
+
   //pubwheelStatus.publish(&wheelOffset);// current rotation data for each wheel. 
 
 }
@@ -196,18 +196,18 @@ void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
   if(newWinchCommand.data != 0){
     //currentWinchStatus = START_ROTATING_WINCH;
     //winchRotationTime = newWinchCommand.data;
-    
-     if( newWinchCommand.data > 0) {
-       driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-       delaySeconds(newWinchCommand.data);
-       driveClockwise(WINCH_MOTOR_ID, 0);
-     }
-     else {
-       driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-       delaySeconds(newWinchCommand.data);
-       driveCounterclockwise(WINCH_MOTOR_ID, 0);
-     }
-     
+
+    if( newWinchCommand.data > 0) {
+      driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
+      delaySeconds(newWinchCommand.data);
+      driveClockwise(WINCH_MOTOR_ID, 0);
+    }
+    else {
+      driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
+      delaySeconds(newWinchCommand.data);
+      driveCounterclockwise(WINCH_MOTOR_ID, 0);
+    }
+
   }
 }
 
@@ -290,7 +290,7 @@ bool needsToArticulate() {
   if (delta < -moveRange || delta > moveRange) { 
     return true; 
   }
-  
+
   delta = wheelStatus.rr_articulation_angle - wheelTarget.rr_articulation_angle;  //RR
   moveRange = (motorInMotion[REAR_RIGHT_ARTICULATION_MOTOR_ID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
   if (delta < -moveRange || delta > moveRange) { 
@@ -301,26 +301,175 @@ bool needsToArticulate() {
 }
 
 void articulateAllWheels() {
-  int delta;
-  int direction;
 
-  direction = getArticulationDirection(FRONT_LEFT_DRIVE_MOTOR_ID, wheelStatus.fl_articulation_angle, wheelTarget.fl_articulation_angle); //FL
-  articulateWheel(FRONT_LEFT_DRIVE_MOTOR_ID, direction);
+  int aSpeed = 50;
+  int dSpeed = (int)(50.0 * 6260.0 / 7521.0);
+  // Test all articulation motors:
+  // 1.5s clockwise, then 1.5s counterclockwise.
+  if(wheelTarget.fl_articulation_angle > 0){
+    driveClockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-  direction = getArticulationDirection(MIDDLE_LEFT_DRIVE_MOTOR_ID, wheelStatus.ml_articulation_angle, wheelTarget.ml_articulation_angle); //ML
-  articulateWheel(MIDDLE_LEFT_DRIVE_MOTOR_ID, direction);
+    delaySeconds((int)wheelTarget.fl_articulation_angle); 
+    driveClockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
+  }
+  else if(wheelTarget.fl_articulation_angle < 0){
+    driveCounterclockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(FRONT_LEFT_DRIVE_MOTOR_ID, dSpeed);
 
-  direction = getArticulationDirection(REAR_LEFT_DRIVE_MOTOR_ID, wheelStatus.rl_articulation_angle, wheelTarget.rl_articulation_angle); //RL
-  articulateWheel(REAR_LEFT_DRIVE_MOTOR_ID, direction);
+    delaySeconds(-(int)wheelTarget.fl_articulation_angle); 
+    driveCounterclockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID,0); 
+    driveCounterclockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
+  }
+  else{
+    driveCounterclockwise(FRONT_LEFT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
 
-  direction = getArticulationDirection(FRONT_RIGHT_DRIVE_MOTOR_ID, wheelStatus.fr_articulation_angle, wheelTarget.fr_articulation_angle); //FR
-  articulateWheel(FRONT_RIGHT_DRIVE_MOTOR_ID, direction);
+  }
 
-  direction = getArticulationDirection(MIDDLE_RIGHT_DRIVE_MOTOR_ID, wheelStatus.mr_articulation_angle, wheelTarget.mr_articulation_angle); //MR
-  articulateWheel(MIDDLE_RIGHT_DRIVE_MOTOR_ID, direction);
+  if(wheelTarget.fr_articulation_angle > 0){
+    driveClockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, dSpeed);
 
-  direction = getArticulationDirection(REAR_RIGHT_DRIVE_MOTOR_ID, wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
-  articulateWheel(REAR_RIGHT_DRIVE_MOTOR_ID, direction);
+    delaySeconds((int)wheelTarget.fr_articulation_angle); 
+    driveClockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else if(wheelTarget.fr_articulation_angle < 0){
+    driveCounterclockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds(-(int)wheelTarget.fr_articulation_angle); 
+    driveCounterclockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID,0); 
+    driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else{
+    driveCounterclockwise(FRONT_RIGHT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }  
+
+  if(wheelTarget.ml_articulation_angle > 0){
+    driveClockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds((int)wheelTarget.ml_articulation_angle); 
+
+    driveClockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else if(wheelTarget.ml_articulation_angle < 0){
+    driveCounterclockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds(-(int)wheelTarget.ml_articulation_angle); 
+
+    driveCounterclockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID,0);
+    driveCounterclockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else{
+    driveCounterclockwise(MIDDLE_LEFT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+
+  if(wheelTarget.mr_articulation_angle > 0){
+    driveClockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, dSpeed);
+
+
+    delaySeconds((int)wheelTarget.mr_articulation_angle); 
+    driveClockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else if(wheelTarget.mr_articulation_angle < 0){
+    driveCounterclockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds(-(int)wheelTarget.mr_articulation_angle); 
+    driveCounterclockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else{
+    driveCounterclockwise(MIDDLE_RIGHT_ARTICULATION_MOTOR_ID,0); 
+    driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+
+  if(wheelTarget.rl_articulation_angle > 0){
+    driveClockwise(REAR_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds((int)wheelTarget.rl_articulation_angle); 
+    driveClockwise(REAR_LEFT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else if(wheelTarget.rl_articulation_angle < 0){
+    driveCounterclockwise(REAR_LEFT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(REAR_LEFT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds(-(int)wheelTarget.rl_articulation_angle); 
+    driveCounterclockwise(REAR_LEFT_ARTICULATION_MOTOR_ID,0); 
+    driveCounterclockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else{
+    driveCounterclockwise(REAR_LEFT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
+
+  }
+
+  if(wheelTarget.rr_articulation_angle > 0){
+    driveClockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveClockwise(REAR_RIGHT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds((int)wheelTarget.rr_articulation_angle); 
+    driveClockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);
+    driveClockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else if(wheelTarget.rr_articulation_angle < 0){
+    driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID, aSpeed);
+    driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, dSpeed);
+
+    delaySeconds(-(int)wheelTarget.rr_articulation_angle); 
+    driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  else{
+    driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);  
+    driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
+
+  }
+  /*int delta;
+   int direction;
+   
+   direction = getArticulationDirection(FRONT_LEFT_DRIVE_MOTOR_ID, wheelStatus.fl_articulation_angle, wheelTarget.fl_articulation_angle); //FL
+   articulateWheel(FRONT_LEFT_DRIVE_MOTOR_ID, direction);
+   
+   direction = getArticulationDirection(MIDDLE_LEFT_DRIVE_MOTOR_ID, wheelStatus.ml_articulation_angle, wheelTarget.ml_articulation_angle); //ML
+   articulateWheel(MIDDLE_LEFT_DRIVE_MOTOR_ID, direction);
+   
+   direction = getArticulationDirection(REAR_LEFT_DRIVE_MOTOR_ID, wheelStatus.rl_articulation_angle, wheelTarget.rl_articulation_angle); //RL
+   articulateWheel(REAR_LEFT_DRIVE_MOTOR_ID, direction);
+   
+   direction = getArticulationDirection(FRONT_RIGHT_DRIVE_MOTOR_ID, wheelStatus.fr_articulation_angle, wheelTarget.fr_articulation_angle); //FR
+   articulateWheel(FRONT_RIGHT_DRIVE_MOTOR_ID, direction);
+   
+   direction = getArticulationDirection(MIDDLE_RIGHT_DRIVE_MOTOR_ID, wheelStatus.mr_articulation_angle, wheelTarget.mr_articulation_angle); //MR
+   articulateWheel(MIDDLE_RIGHT_DRIVE_MOTOR_ID, direction);
+   
+   direction = getArticulationDirection(REAR_RIGHT_DRIVE_MOTOR_ID, wheelStatus.rr_articulation_angle, wheelTarget.rr_articulation_angle); //RR
+   articulateWheel(REAR_RIGHT_DRIVE_MOTOR_ID, direction);*/
 }
 
 /**
@@ -329,7 +478,7 @@ void articulateAllWheels() {
 int getArticulationDirection(int motorID, int from, int to) {
 
   int delta = from-to;
-  
+
   int moveRange = (motorInMotion[motorID]) ? DELTA_STOP_RANGE : DELTA_START_RANGE; 
   if (delta >= -moveRange && delta <= moveRange) {
     return ARTICULATION_DIRECTION_NONE;
@@ -461,7 +610,7 @@ void stopAllMotors(bool EStop) {
  * Stops the movement motors (Articulation and Wheels) and chages the current state to reflect the stop.
  */
 void stopMovementMotors() {
-    currentStatus = STOPPED;
+  currentStatus = STOPPED;
 
   //Stop all movement (drive and articulation) motors 
   const int speed = 0;
@@ -489,8 +638,8 @@ void stopConveyor(){
 }
 
 void driveWinch(){
-   if(winchRotationTime < 0){
-     // Lower the winch
+  if(winchRotationTime < 0){
+    // Lower the winch
     driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
   }
   else if(conveyorRotationTime > 0){
@@ -515,13 +664,13 @@ void stopWinch(){
 void driveClockwise(int motorID, int speed){
   if(0 == speed)
   {
-   motorInMotion[motorID] = false; 
+    motorInMotion[motorID] = false; 
   }
   else
   {
     motorInMotion[motorID] = true;
   }
-  
+
   // Packet format: Address Byte, Command Byte, Value Byte, Checksum.
   // Build the data packet:
   // Get the address and motor command ID from a predefined array.
@@ -553,7 +702,7 @@ void driveClockwise(int motorID, int speed){
 void driveCounterclockwise(char motorID, char speed){ 
   if(0 == speed)
   {
-   motorInMotion[motorID] = false; 
+    motorInMotion[motorID] = false; 
   }
   else
   {
@@ -577,21 +726,21 @@ void driveCounterclockwise(char motorID, char speed){
 }
 
 /**
-* Gets the last known position of each articulation joint, and updates acordingly.
-*/
+ * Gets the last known position of each articulation joint, and updates acordingly.
+ */
 void updateArticulationValues()
 {
-  
+
   /*
   // Code for command line testing purposes
-  wheelStatus.ml_articulation_angle = wheelTarget.ml_articulation_angle;
-  wheelStatus.rl_articulation_angle = wheelTarget.rl_articulation_angle;
-  wheelStatus.fl_articulation_angle = wheelTarget.fl_articulation_angle;
-  wheelStatus.mr_articulation_angle = (int)wheelTarget.mr_articulation_angle;
-  wheelStatus.rr_articulation_angle = (int)wheelTarget.rr_articulation_angle;
-  wheelStatus.fr_articulation_angle = (int)wheelTarget.fr_articulation_angle;
-  */
-  
+   wheelStatus.ml_articulation_angle = wheelTarget.ml_articulation_angle;
+   wheelStatus.rl_articulation_angle = wheelTarget.rl_articulation_angle;
+   wheelStatus.fl_articulation_angle = wheelTarget.fl_articulation_angle;
+   wheelStatus.mr_articulation_angle = (int)wheelTarget.mr_articulation_angle;
+   wheelStatus.rr_articulation_angle = (int)wheelTarget.rr_articulation_angle;
+   wheelStatus.fr_articulation_angle = (int)wheelTarget.fr_articulation_angle;
+   */
+
   int encoderPostition = EncoderFL::getPosition() + (int)(wheelOffset.fl_articulation_angle / 360 * 400);
   while (encoderPostition < 0)
   {
@@ -689,7 +838,7 @@ void unitTest(){
   // Test the conveyor.
   //unitTestConveyor(); 
 }  
-  
+
 void unitTestConveyor()
 {
   // Test the conveyor:
@@ -709,16 +858,22 @@ void unitTestConveyor()
 
 void unitTestWinch()
 {
+  for(int j = 0; j < 300; j++){
+    delayMicroseconds(15000);
+  }
   // Test the winch: 
-  // 2s up (clockwise), 2s down (counterclockwise). TODO: OUT OF DATE COMMENT
-  driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-  delaySeconds(5);
-  driveCounterclockwise(WINCH_MOTOR_ID, 0);
-  delaySeconds(1);
   driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-  delaySeconds(5);
-  driveCounterclockwise(WINCH_MOTOR_ID, 0);
   delaySeconds(2);
+  driveClockwise(WINCH_MOTOR_ID, 0);
+  
+  for(int j = 0; j < 300; j++) {
+   delayMicroseconds(15000);
+  }
+  
+  driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
+  delaySeconds(4);
+  driveCounterclockwise(WINCH_MOTOR_ID, 0);
+  
 }
 
 void unitTest2(){
@@ -755,36 +910,36 @@ void unitTest2(){
 
 void proofOfLife()
 {
- // Proof of life newspaper (5s)
- delaySeconds(5);
- // Spin conveyor backwards (10s)
- driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
- delaySeconds(10);
- driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
- // Lift the winch (25s)
- driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
- delaySeconds(25);
- driveClockwise(WINCH_MOTOR_ID, 0);
- // Drive forwards for 10s
- char driveSpeed = 20;
- driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, driveSpeed);
- driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
- driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, driveSpeed);
- driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
- driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, driveSpeed);
- driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
- delaySeconds(10);
- driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
- driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
- driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
- driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
- driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
- driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
- // Spin conveyor forwards (20s)
- driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
- delaySeconds(20);
- driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
-  
+  // Proof of life newspaper (5s)
+  delaySeconds(5);
+  // Spin conveyor backwards (10s)
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(10);
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+  // Lift the winch (25s)
+  driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
+  delaySeconds(25);
+  driveClockwise(WINCH_MOTOR_ID, 0);
+  // Drive forwards for 10s
+  char driveSpeed = 20;
+  driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+  driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+  driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+  driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+  driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, driveSpeed);
+  driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, driveSpeed);
+  delaySeconds(10);
+  driveClockwise(FRONT_LEFT_DRIVE_MOTOR_ID, 0);
+  driveCounterclockwise(FRONT_RIGHT_DRIVE_MOTOR_ID, 0);
+  driveClockwise(MIDDLE_LEFT_DRIVE_MOTOR_ID, 0);
+  driveCounterclockwise(MIDDLE_RIGHT_DRIVE_MOTOR_ID, 0);
+  driveClockwise(REAR_LEFT_DRIVE_MOTOR_ID, 0);
+  driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
+  // Spin conveyor forwards (20s)
+  driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
+  delaySeconds(20);
+  driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
+
 }
 
 
@@ -806,7 +961,7 @@ void setup(){
   // To start, no motor is moving.
   for(int i = 0; i < 15; ++i)
   {
-   motorInMotion[i] = false; 
+    motorInMotion[i] = false; 
   }
 
   // Setup the encoders
@@ -842,31 +997,31 @@ void setup(){
 // So far, it drives the robot forwards and backwards.
 void loop(){
   updateArticulationValues(); 
-  
+
   //We are E-Stopped, don't respond to future commands.
   if (currentStatus == E_STOPPED) {
     //TODO: This will never happen right now, may want for competition though
     return;
   } 
-  
+
   if(currentConveyorStatus == START_ROTATING_CONVEYOR){
     conveyorStopTime = millis() + (long)abs(conveyorRotationTime);   
     driveConveyor();
     currentConveyorStatus = ROTATING_CONVEYOR;
   }
-  
+
   if(currentConveyorStatus == ROTATING_CONVEYOR){
     if(millis() >= conveyorStopTime){
       stopConveyor();
     }
   }
-  
+
   if(currentWinchStatus == START_ROTATING_WINCH){
     winchStopTime = millis() + (long)abs(winchRotationTime);   
     driveWinch();
     currentWinchStatus = ROTATING_WINCH;
   }
-  
+
   if(currentWinchStatus == ROTATING_WINCH){
     if(millis() >= winchStopTime){
       stopWinch();
@@ -878,17 +1033,17 @@ void loop(){
   if (currentStatus == STOPPED) {
     // do nothing
   }
-  
+
   if (currentStatus == ARTICULATING) {
     print("needs to articulate: true");
-    if (needsToArticulate() == true) {
-      articulateAllWheels();
-    } 
-    else {
-      print("needs to articulate: false");
-      stopMovementMotors();
-      currentStatus = START_DRIVING;
-    }
+    //if (needsToArticulate() == true) {
+    articulateAllWheels();
+    //} 
+    //else {
+    // print("needs to articulate: false");
+    stopMovementMotors();
+    currentStatus = START_DRIVING;
+    //}
   }
 
   if (currentStatus == START_DRIVING) {
@@ -898,14 +1053,14 @@ void loop(){
     // if (needsToArticulate()) {
     //   //Set state to articulate and don't drive
     //   currentStatus = ARTICULATING;
-	//   // TODO: Does this need a rosnode.spin() ?
+    //   // TODO: Does this need a rosnode.spin() ?
     //   return;
     // }
 
     print("current status: start_driving");
     //Set stop drive time
     driveStopTime = millis() + (long)wheelTarget.drive_duration*1000;
-    
+
     //Send drive start command
     driveAllMotors();
 
@@ -918,7 +1073,7 @@ void loop(){
       stopMovementMotors();
     }
   }
-  
+
   pubwheelStatus.publish(&wheelStatus);// current rotation data for each wheel. 
 
   //Sync with ROS
@@ -929,6 +1084,9 @@ void loop(){
     delayMicroseconds(15000);
   }
 }
+
+
+
 
 
 

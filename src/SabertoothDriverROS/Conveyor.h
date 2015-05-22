@@ -19,10 +19,10 @@ const unsigned char RIGHT_CONVEYOR_MOTOR_ADDRESS = 131;
 const unsigned char WINCH_MOTOR_ADDRESS = 131;
 
 const unsigned char LEFT_CONVEYOR_MOTOR_COMMAND = 9;
-const unsigned char RIGHT_CONVEYOR_MOTOR_COMMAND = 4;
-const unsigned char WINCH_MOTOR_COMMAND = 0;
+const unsigned char RIGHT_CONVEYOR_MOTOR_COMMAND = 0;
+const unsigned char WINCH_MOTOR_COMMAND = 4;
 
 const unsigned char LEFT_CONVEYOR_MOTOR_FLIPPED = 0;
 const unsigned char RIGHT_CONVEYOR_MOTOR_FLIPPED = 0;
-const unsigned char WINCH_MOTOR_FLIPPED = 1;
+const unsigned char WINCH_MOTOR_FLIPPED = 0;
 
