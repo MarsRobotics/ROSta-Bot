@@ -302,14 +302,14 @@ bool needsToArticulate() {
 
 void articulateAllWheels() {
 
-  int[] wheelIds = {
+  int wheelIds[6] = {
     FRONT_LEFT_ARTICULATION_MOTOR_ID,
     FRONT_RIGHT_ARTICULATION_MOTOR_ID, 
     MIDDLE_LEFT_ARTICULATION_MOTOR_ID, 
     MIDDLE_RIGHT_ARTICULATION_MOTOR_ID, 
     REAR_LEFT_ARTICULATION_MOTOR_ID,
-    REAR_RIGHT_ARTICULATION_MOTOR_ID  };
-  int[] wheelArticulations = new int[6];
+    REAR_RIGHT_ARTICULATION_MOTOR_ID };
+  int wheelArticulations[6];
 
   // Note: wheelTarget says it is the angle, but since we 
   // hacked at the last minute, it is actually time.
@@ -400,8 +400,8 @@ void articulateAllWheels() {
     delaySeconds((double)diff);
 
     // Stop that motor
-    driveCounterclockwise(wheelArticulation[last],0);  
-    driveCounterclockwise(wheelArticulation[last] - 6, 0);
+    driveCounterclockwise(wheelArticulations[last],0);  
+    driveCounterclockwise(wheelArticulations[last] - 6, 0);
     last = wheelArticulations[i];
   }
 
@@ -1048,7 +1048,7 @@ void proofOfLife()
 }
 
 
-void delaySeconds(unsigned double n){
+void delaySeconds(double n){
   unsigned int delayTime = 10000;
   long desiredMicroDelay = (long)(n * 1000000L);
   long numCycles = desiredMicroDelay / (long)delayTime;
