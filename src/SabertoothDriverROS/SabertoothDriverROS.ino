@@ -351,10 +351,10 @@ void articulateAllWheels() {
       // Insertion sort
       for (int j = 0; j < 6; j++)
       {
-        int key = abs(wheelArticulations[j]);
+        int key = wheelArticulations[j];
         int key2 = wheelIds[j];
         int i = j - 1; 
-        while (i >= 0 && abs(wheelArticulations[i]) > key)
+        while (i >= 0 && abs(wheelArticulations[i]) > abs(key))
         {
           wheelArticulations[i + 1] = wheelArticulations[i];
           wheelIds[i + 1] = wheelIds[i];
@@ -1041,7 +1041,6 @@ void proofOfLife()
   driveClockwise(RIGHT_CONVEYOR_MOTOR_ID, CONVEYOR_SPEED);
   delaySeconds((double)20);
   driveCounterclockwise(RIGHT_CONVEYOR_MOTOR_ID, 0);
-
 }
 
 
