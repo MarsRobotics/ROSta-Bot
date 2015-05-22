@@ -302,8 +302,111 @@ bool needsToArticulate() {
 
 void articulateAllWheels() {
 
-  int aSpeed = 50;
-  int dSpeed = (int)(50.0 * 6260.0 / 7521.0);
+  int[] wheelIds = {
+    FRONT_LEFT_ARTICULATION_MOTOR_ID,
+    FRONT_RIGHT_ARTICULATION_MOTOR_ID, 
+    MIDDLE_LEFT_ARTICULATION_MOTOR_ID, 
+    MIDDLE_RIGHT_ARTICULATION_MOTOR_ID, 
+    REAR_LEFT_ARTICULATION_MOTOR_ID,
+    REAR_RIGHT_ARTICULATION_MOTOR_ID  };
+  int[] wheelArticulations = new int[6];
+
+  // Note: wheelTarget says it is the angle, but since we 
+  // hacked at the last minute, it is actually time.
+  wheelArticulations[0] = wheelTarget.fl_articulation_angle;
+  wheelArticulations[1] = wheelTarget.fr_articulation_angle;
+  wheelArticulations[2] = wheelTarget.ml_articulation_angle;
+  wheelArticulations[3] = wheelTarget.mr_articulation_angle;
+  wheelArticulations[4] = wheelTarget.rl_articulation_angle;
+  wheelArticulations[5] = wheelTarget.rr_articulation_angle;
+
+  // Algorithm: "A nondeterministic mergesort for Jaimiey" <3 
+  boolean sorted = false;
+  unsigned long tries = 0;
+  while(!sorted) {
+
+    // Spin the random dial
+    for(int i = 0; i < 6; i++ ) {
+      int pos = random(0, 6);
+      int temp = wheelArticulations[i]; 
+      wheelArticulations[i] = wheelArticulations[pos];
+      wheelArticulations[pos] = temp;
+
+      int temp2 = wheelIds[i];
+      wheelIds[i] = wheelIds[pos];
+      wheelIds[pos] = temp2;
+    }
+
+    // Check if we are correct
+    int last = wheelArticulations[0];
+    for(int i = 1; i < 6; i++ ) {
+      if(abs(last) < abs(wheelArticulations[i])) {
+        last = wheelArticulations[i];
+      }
+      else {
+        sorted = false;
+        break;
+      }
+    }
+
+    tries++;
+    if(tries > 2000) {
+      // Insertion sort
+      for (int j = 0; j < 6; j++)
+      {
+        int key = abs(wheelArticulations[j]);
+        int key2 = wheelIds[j];
+        int i = j - 1; 
+        while (i >= 0 && abs(wheelArticulations[i]) > key)
+        {
+          wheelArticulations[i + 1] = wheelArticulations[i];
+          wheelIds[i + 1] = wheelIds[i];
+          i = i - 1;
+        }
+
+        wheelArticulations[i + 1] = key;
+        wheelIds[i + 1] = key2;
+      }
+      sorted = true;
+    }
+  }
+  // End Algorithm
+
+  // Iterate through all of the wheels, and 
+  // start them if their times are greater than 0.
+  for(int i = 0; i < 6; i++ ) {
+    if(wheelArticulations[i] != 0) {
+      // Drive clockwise when positive time is given
+      if(wheelArticulations[i] > 0) {
+        // Articulate
+        driveClockwise(wheelIds[i], ARTICULATION_SPEED);
+        // drive the wheel
+        driveClockwise(wheelIds[i] - 6, ARTICULATION_DRIVE_SPEED);
+      }
+      else {
+        // Articulate
+        driveCounterclockwise(wheelIds[i], ARTICULATION_SPEED);
+        // Drive the wheel
+        driveCounterclockwise(wheelIds[i] - 6, ARTICULATION_DRIVE_SPEED);
+      }
+    }
+  }
+
+  // Delay the difference for each pair
+  int last = wheelArticulations[0];
+  delaySeconds(wheelArticulations[0]);
+  for(int i = 1; i < 6; i++ ) {
+    int diff = abs(wheelArticulations[i]) - abs(last);
+    delaySeconds((double)diff);
+
+    // Stop that motor
+    driveCounterclockwise(wheelArticulation[last],0);  
+    driveCounterclockwise(wheelArticulation[last] - 6, 0);
+    last = wheelArticulations[i];
+  }
+
+
+  /*
   // Test all articulation motors:
   // 1.5s clockwise, then 1.5s counterclockwise.
   if(wheelTarget.fl_articulation_angle > 0){
@@ -449,7 +552,9 @@ void articulateAllWheels() {
     driveCounterclockwise(REAR_RIGHT_ARTICULATION_MOTOR_ID,0);  
     driveCounterclockwise(REAR_RIGHT_DRIVE_MOTOR_ID, 0);
 
-  }
+  }*/
+  
+  
   /*int delta;
    int direction;
    
@@ -865,15 +970,15 @@ void unitTestWinch()
   driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
   delaySeconds(2);
   driveClockwise(WINCH_MOTOR_ID, 0);
-  
+
   for(int j = 0; j < 300; j++) {
-   delayMicroseconds(15000);
+    delayMicroseconds(15000);
   }
-  
+
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
   delaySeconds(4);
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
-  
+
 }
 
 void unitTest2(){
@@ -1084,6 +1189,7 @@ void loop(){
     delayMicroseconds(15000);
   }
 }
+
 
 
 
