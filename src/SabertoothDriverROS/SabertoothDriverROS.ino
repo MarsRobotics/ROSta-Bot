@@ -788,9 +788,9 @@ void proofOfLife()
 }
 
 
-void delaySeconds(unsigned int n){
+void delaySeconds(unsigned double n){
   unsigned int delayTime = 10000;
-  long desiredMicroDelay = ((long)n) * 1000000L;
+  long desiredMicroDelay = (long)(n * 1000000L);
   long numCycles = desiredMicroDelay / (long)delayTime;
   for(long j = 0L; j < numCycles; j++){
     delayMicroseconds(delayTime);
