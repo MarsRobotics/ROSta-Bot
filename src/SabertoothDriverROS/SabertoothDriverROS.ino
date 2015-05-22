@@ -193,22 +193,19 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
 }
 
 void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
-  if(newWinchCommand.data != 0){
-    //currentWinchStatus = START_ROTATING_WINCH;
-    //winchRotationTime = newWinchCommand.data;
-
-    if( newWinchCommand.data > 0) {
-      driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-      delaySeconds((double)newWinchCommand.data);
+    if(newWinchCommand.data == 0){
       driveClockwise(WINCH_MOTOR_ID, 0);
     }
-    else {
+    else if( newWinchCommand.data > 0) {
+      driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
+      delaySeconds(1);
+      driveClockwise(WINCH_MOTOR_ID, 0);
+    }
+    else if(newWinchCommand.data < 0) {
       driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-      delaySeconds((double)newWinchCommand.data);
+      delaySeconds(newWinchCommand.data);
       driveCounterclockwise(WINCH_MOTOR_ID, 0);
     }
-
-  }
 }
 
 
@@ -219,7 +216,7 @@ ros::Subscriber<command2ros::ManualCommand> setActualArticulationSubscriber("Set
 
 ros::Subscriber<std_msgs::Int16> conveyorSubscriber("TransportConveyorCommand", &newConveyorCommandCallback);
 
-ros::Subscriber<std_msgs::Int16> bSubscriber("TransportWinchCommand", &newWinchCommandCallback);
+ros::Subscriber<std_msgs::Int16> winchSubscriber("TransportWinchCommand", &newWinchCommandCallback);
 
 
 // Print error message to "sabertooth_debugger" topic
@@ -350,7 +347,7 @@ void articulateAllWheels() {
     }
 
     tries++;
-    if(tries > 2000) {
+    if(tries > 720) {
       // Insertion sort
       for (int j = 0; j < 6; j++)
       {
@@ -967,16 +964,16 @@ void unitTestWinch()
     delayMicroseconds(15000);
   }
   // Test the winch: 
-  driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
-  delaySeconds((double)2);
-  driveClockwise(WINCH_MOTOR_ID, 0);
+  /*driveCounterclockwise(WINCH_MOTOR_ID, WINCH_SPEED_DOWN);
+  delaySeconds(2.0);
+  driveClockwise(WINCH_MOTOR_ID, 0);*/
 
-  for(int j = 0; j < 300; j++) {
+  /*for(int j = 0; j < 300; j++) {
     delayMicroseconds(15000);
-  }
+  }*/
 
   driveClockwise(WINCH_MOTOR_ID, WINCH_SPEED_UP);
-  delaySeconds((double)4);
+  delaySeconds(1.0);
   driveCounterclockwise(WINCH_MOTOR_ID, 0);
 
 }
@@ -1081,6 +1078,8 @@ void setup(){
   sabertoothDriverNode.initNode();
   sabertoothDriverNode.subscribe(commandSubscriber);
   sabertoothDriverNode.subscribe(setActualArticulationSubscriber);
+  sabertoothDriverNode.subscribe(winchSubscriber);
+  sabertoothDriverNode.subscribe(conveyorSubscriber);
   sabertoothDriverNode.advertise(pubwheelStatus);
   sabertoothDriverNode.advertise(pubDebug);
 
