@@ -192,7 +192,7 @@ void newConveyorCommandCallback(const std_msgs::Int16& newConveyorCommand){
   }
 }
 
-void newWinchCommandCallback(const std_msgs::Int16& newWinchCommand){
+void newWinchCommandCallback(const std_msgs::Float32& newWinchCommand){
   if(newWinchCommand.data != 0){
     //currentWinchStatus = START_ROTATING_WINCH;
     //winchRotationTime = newWinchCommand.data;
@@ -350,7 +350,7 @@ void articulateAllWheels() {
     }
 
     tries++;
-    if(tries > 2000) {
+    if(tries > 720) {
       // Insertion sort
       for (int j = 0; j < 6; j++)
       {
